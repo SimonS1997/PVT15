@@ -1,0 +1,8 @@
+{
+  "AUTH_CLIENT_ID": "YOUR_CLIENT_ID",
+  "AUTH_REDIRECT_URI": "msauth://com.kulturnatten.app/YOUR_SIGNATURE_HASH",
+  "AUTH_AUTHORITY_URL": "https://YOUR_TENANT_SUBDOMAIN.ciamlogin.com/YOUR_TENANT_ID/",
+  "AUTH_USER_FLOW": "B2X_1_SignUpSignIn",
+  "BACKEND_BASE_URL": "http://10.0.2.2:8080",
+  "AUTH_SCOPES": "api://YOUR_API_APP_ID/access_as_user,openid,profile,offline_access"
+}
