@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'map_test_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +20,7 @@ class KulturnattenApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF006A6A)),
         scaffoldBackgroundColor: const Color(0xFFF5F7F8),
       ),
-      home: const AuthScreen(),
+      home: const MapTestPage(), //Bytte tillfälligt för att testa map page, byt tillbaka till AuthScreen() sen
     );
   }
 }
