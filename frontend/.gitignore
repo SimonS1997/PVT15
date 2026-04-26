@@ -33,6 +33,8 @@ migrate_working_dir/
 /coverage/
 /env/auth.local.json
 
+android/gradle.properties
+
 # Symbolication related
 app.*.symbols
 
