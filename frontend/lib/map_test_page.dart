@@ -12,6 +12,32 @@ class MapTestPage extends StatelessWidget {
     const LatLng slussen = LatLng(59.3195, 18.0720);
     const LatLng odenplan = LatLng(59.3420, 18.0495);
 
+    final Set<Marker> markers = {
+      Marker(
+        markerId: const MarkerId('kulturhuset'),
+        position: kulturhuset,
+        infoWindow: const InfoWindow(title: 'Kulturhuset'),
+      ),
+      Marker(
+        markerId: const MarkerId('slussen'),
+        position: slussen,
+        infoWindow: const InfoWindow(title: 'Slussen'),
+      ),
+      Marker(
+        markerId: const MarkerId('odenplan'),
+        position: odenplan,
+        infoWindow: const InfoWindow(title: 'Odenplan'),
+      ),
+    };
+
+    final Set<Polyline> polylines = {
+      Polyline(
+        polylineId: const PolylineId('route'),
+        points: const [kulturhuset, slussen, odenplan],
+        width: 5,
+      ),
+    };
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kulturnatten karta'),
@@ -21,30 +47,8 @@ class MapTestPage extends StatelessWidget {
           target: stockholm,
           zoom: 12,
         ),
-        markers: const {
-          Marker(
-            markerId: MarkerId('kulturhuset'),
-            position: kulturhuset,
-            infoWindow: InfoWindow(title: 'Kulturhuset'),
-          ),
-          Marker(
-            markerId: MarkerId('slussen'),
-            position: slussen,
-            infoWindow: InfoWindow(title: 'Slussen'),
-          ),
-          Marker(
-            markerId: MarkerId('odenplan'),
-            position: odenplan,
-            infoWindow: InfoWindow(title: 'Odenplan'),
-          ),
-        },
-        polylines: const {
-          Polyline(
-            polylineId: PolylineId('route'),
-            points: [kulturhuset, slussen, odenplan],
-            width: 5,
-          ),
-        },
+        markers: markers,
+        polylines: polylines,
       ),
     );
   }
