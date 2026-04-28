@@ -1,6 +1,8 @@
 spring:
   config:
     import: optional:file:.env.local[.properties]
+  datasource:
+    url: jdbc:sqlite::resource:database/events.db
   security:
     oauth2:
       resourceserver:
