@@ -18,10 +18,11 @@ class SlApiClient(
     private val httpClient: HttpClient,
     private val objectMapper: ObjectMapper
 ) {
-    private val apiKey: String = System.getenv("RESROBOT_API_KEY")
-        ?: error("RESROBOT_API_KEY saknas som environment variable")
+    private val apiKey: String?
+        get() = System.getenv("RESROBOT_API_KEY")?.takeIf { it.isNotBlank() }
 
     fun planJourney(originName: String, destinationName: String): TransitJourneyResponse {
+        val requiredApiKey = requireApiKey()
         val originId = findStopExtId(originName)
         val destinationId = findStopExtId(destinationName)
 
@@ -30,7 +31,7 @@ class SlApiClient(
                 "&originId=$originId" +
                 "&destId=$destinationId" +
                 "&numF=3" +
-                "&accessId=$apiKey"
+                "&accessId=$requiredApiKey"
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create(url))
@@ -78,13 +79,14 @@ class SlApiClient(
     }
 
     private fun findStopExtId(stopName: String): String {
+        val requiredApiKey = requireApiKey()
         val encodedStopName = URLEncoder.encode(stopName, StandardCharsets.UTF_8)
 
         val url = "https://api.resrobot.se/v2.1/location.name" +
                 "?input=$encodedStopName" +
                 "&format=json" +
                 "&type=S" +
-                "&accessId=$apiKey"
+                "&accessId=$requiredApiKey"
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create(url))
@@ -141,4 +143,7 @@ class SlApiClient(
             arrivalTime = "$arrivalDate $arrivalTime".trim()
         )
     }
+
+    private fun requireApiKey(): String =
+        apiKey ?: error("RESROBOT_API_KEY saknas som environment variable")
 }

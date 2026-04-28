@@ -1,23 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kulturnatten/main.dart';
+import 'package:kulturnatten/auth_service.dart';
 
 void main() {
-  test('pretty print returns indented json', () {
-    final String rendered = prettyPrintJson(<String, dynamic>{
-      'status': 'Logged out',
-      'claims': <String, dynamic>{'sub': '123'},
-    });
-
-    expect(rendered, contains('"status": "Logged out"'));
-    expect(rendered, contains('"sub": "123"'));
-  });
-
   test('auth config identifies placeholder values', () {
-    final AuthConfig config = AuthConfig.fromJson(<String, dynamic>{
-      'client_id': 'YOUR_CLIENT_ID',
-      'redirect_uri': 'msauth://com.kulturnatten.app/redirect',
-      'authority_url': 'https://YOUR_TENANT_SUBDOMAIN.ciamlogin.com/tenant-id/',
-    });
+    final AuthConfig config = AuthConfig(
+      clientId: 'YOUR_CLIENT_ID',
+      redirectUri: 'com.kulturnatten.app:/oauthredirect',
+      issuerUrl: 'http://10.0.2.2:8081/realms/kulturnatten-dev',
+      scopes: const <String>['openid'],
+    );
 
     expect(config.isConfigured, isFalse);
     expect(config.configurationError, isNotNull);

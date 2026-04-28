@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'auth_service.dart';
+
 class MapTestPage extends StatelessWidget {
   const MapTestPage({super.key});
 
@@ -41,6 +43,21 @@ class MapTestPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kulturnatten karta'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await AuthService.instance.signOut();
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/',
+                  (Route<dynamic> _) => false,
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: GoogleMap(
         initialCameraPosition: const CameraPosition(

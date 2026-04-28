@@ -1,0 +1,16 @@
+# Env files (per-machine secrets)
+**/.env.local
+**/.env.*.local
+
+# Gradle build artifacts and caches (per-machine)
+backend/.gradle/
+backend/build/
+
+# IDE settings (per-user)
+.vscode/
+.idea/
+*.iml
+
+# OS junk
+.DS_Store
+Thumbs.db

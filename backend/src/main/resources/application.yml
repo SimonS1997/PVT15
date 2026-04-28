@@ -1,0 +1,8 @@
+spring:
+  config:
+    import: optional:file:.env.local[.properties]
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_ISSUER_URI}
