@@ -26,7 +26,7 @@ class _MapTestPageState extends State<MapTestPage> {
     super.initState();
 
     final service = EventApiService(
-      baseUrl: 'http://10.0.2.2:8080',
+      baseUrl: 'http://10.0.2.2:8082',
     );
 
     _eventsFuture = service.fetchEvents(accessToken: widget.accessToken);
