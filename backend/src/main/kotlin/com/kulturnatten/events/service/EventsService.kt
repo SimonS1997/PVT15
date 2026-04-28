@@ -7,7 +7,7 @@ import java.sql.DriverManager
 @Service
 class EventService {
 
-    private val dbUrl = "jdbc:sqlite:backend/src/main/resources/database/events.db"
+    private val dbUrl = "jdbc:sqlite:src/main/resources/database/events.db"
 
     fun getAllEvents(): List<EventResponse> {
         DriverManager.getConnection(dbUrl).use { connection ->
