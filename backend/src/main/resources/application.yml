@@ -8,3 +8,4 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${AUTH_ISSUER_URI}
+

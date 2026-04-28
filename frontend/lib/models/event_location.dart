@@ -8,6 +8,12 @@ class EventLocation {
     required this.address,
     required this.latitude,
     required this.longitude,
+    this.timeStart,
+    this.timeEnd,
+    this.district,
+    this.description,
+    this.nearestStation,
+    this.bookingRequired = false,
   });
 
   final int id;
@@ -16,6 +22,12 @@ class EventLocation {
   final String address;
   final double latitude;
   final double longitude;
+  final String? timeStart;
+  final String? timeEnd;
+  final String? district;
+  final String? description;
+  final String? nearestStation;
+  final bool bookingRequired;
 
   LatLng get position => LatLng(latitude, longitude);
 
@@ -25,6 +37,12 @@ class EventLocation {
       name: json['name'] as String,
       venue: json['venue'] as String,
       address: json['address'] as String,
+      timeStart: json['timeStart'] as String?,
+      timeEnd: json['timeEnd'] as String?,
+      district: json['district'] as String?,
+      description: json['description'] as String?,
+      bookingRequired: json['bookingRequired'] as bool? ?? false,
+      nearestStation: json['nearestStation'] as String?,
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
     );
