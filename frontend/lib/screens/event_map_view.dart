@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import 'models/event_location.dart';
+import '../models/event_location.dart';
 
-class EventMapPage extends StatefulWidget {
-  const EventMapPage({
+class EventMapView extends StatefulWidget {
+  const EventMapView({
     super.key,
     required this.events,
   });
@@ -12,17 +12,11 @@ class EventMapPage extends StatefulWidget {
   final List<EventLocation> events;
 
   @override
-  State<EventMapPage> createState() => _EventMapPageState();
+  State<EventMapView> createState() => _EventMapViewState();
 }
 
-class _EventMapPageState extends State<EventMapPage> {
-  late final List<EventLocation> selectedEvents;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedEvents = [];
-  }
+class _EventMapViewState extends State<EventMapView> {
+  final List<EventLocation> selectedEvents = [];
 
   Set<Marker> get markers {
     return widget.events.map((event) {
@@ -35,7 +29,7 @@ class _EventMapPageState extends State<EventMapPage> {
         ),
         onTap: () {
           setState(() {
-            if (!selectedEvents.contains(event)) {
+            if (!selectedEvents.any((selected) => selected.id == event.id)) {
               selectedEvents.add(event);
             }
           });
@@ -51,7 +45,7 @@ class _EventMapPageState extends State<EventMapPage> {
 
     return {
       Polyline(
-        polylineId: const PolylineId('selected-route'),
+        polylineId: const PolylineId('selected-events-route'),
         points: selectedEvents.map((event) => event.position).toList(),
         width: 5,
       ),
@@ -91,7 +85,8 @@ class _EventMapPageState extends State<EventMapPage> {
                     child: Text('${index + 1}'),
                   ),
                   title: Text(event.name),
-                  subtitle: Text(event.venue),
+                  subtitle: Text('${event.venue}\n${event.address}'),
+                  isThreeLine: true,
                   trailing: IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () {

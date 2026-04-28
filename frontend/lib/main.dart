@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:http/http.dart' as http;
+import 'package:kulturnatten/screens/event_map_view.dart';
 
 import 'auth_service.dart';
-import 'map_test_page.dart';
+import 'screens/map_screen.dart';
 
 void main() {
   runApp(const KulturnattenApp());
@@ -29,7 +30,7 @@ class KulturnattenApp extends StatelessWidget {
       initialRoute: routeAuth,
       routes: <String, WidgetBuilder>{
         routeAuth: (_) => const AuthScreen(),
-        routeMap: (_) => const MapTestPage(),
+        routeMap: (_) => const MapScreen(),
       },
     );
   }
