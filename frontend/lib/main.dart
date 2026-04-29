@@ -33,8 +33,8 @@ class KulturnattenApp extends StatelessWidget {
       ),
       initialRoute: routeProfile,
       routes: <String, WidgetBuilder>{
-        //routeAuth: (_) => const AuthScreen(),
-        //routeMap: (_) => const MapScreen(),
+        routeAuth: (_) => const AuthScreen(),
+        routeMap: (_) => const MapScreen(),
         routeProfile: (_) => const ProfilePage(),
       },
     );
@@ -58,7 +58,7 @@ class KulturnattenApp extends StatelessWidget {
 }
 
 
-/*
+
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -405,4 +405,3 @@ String prettyResponse(String body) {
   }
   return body;
 }
-*/

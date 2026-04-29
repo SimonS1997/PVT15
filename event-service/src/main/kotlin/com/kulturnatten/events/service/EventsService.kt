@@ -1,19 +1,21 @@
 package com.kulturnatten.events.service
 
 import com.kulturnatten.events.model.EventResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.sql.DriverManager
-import org.springframework.beans.factory.annotation.Value
-
 
 @Service
-class EventService {
+class EventService(
 
     @Value("\${spring.datasource.url}")
     private val dbUrl: String
 
+) {
+
     fun getAllEvents(): List<EventResponse> {
         DriverManager.getConnection(dbUrl).use { connection ->
+
             val statement = connection.prepareStatement(
                 """
                 SELECT id, name, venue, address, time_start, time_end, district,
@@ -38,8 +40,10 @@ class EventService {
                         timeEnd = resultSet.getString("time_end"),
                         district = resultSet.getString("district"),
                         description = resultSet.getString("description"),
-                        bookingRequired = resultSet.getInt("booking_required") == 1,
-                        nearestStation = resultSet.getString("nearest_station"),
+                        bookingRequired =
+                            resultSet.getInt("booking_required") == 1,
+                        nearestStation =
+                            resultSet.getString("nearest_station"),
                         latitude = resultSet.getDouble("latitude"),
                         longitude = resultSet.getDouble("longitude")
                     )

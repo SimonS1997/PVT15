@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/profile_stat_card.dart';
-//TILLFÄLLIG DUMMY FIL
+
+// TILLFÄLLIG DUMMY FIL
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -61,6 +62,16 @@ class ProfilePage extends StatelessWidget {
             ),
 
             const SizedBox(height: 30),
+
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/map');
+              },
+              icon: const Icon(Icons.map),
+              label: const Text("Öppna karta"),
+            ),
+
+            const SizedBox(height: 20),
 
             ListTile(
               leading: const Icon(Icons.settings),
