@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:http/http.dart' as http;
-import 'package:kulturnatten/screens/event_map_view.dart';
 
 import 'auth_service.dart';
 import 'screens/map_screen.dart';
+import 'screens/profile_page.dart';
 
 void main() {
   runApp(const KulturnattenApp());
@@ -14,12 +14,33 @@ void main() {
 
 const String routeAuth = '/';
 const String routeMap = '/map';
+const String routeProfile = '/profile';
 
 class KulturnattenApp extends StatelessWidget {
   const KulturnattenApp({super.key});
 
   @override
+
+
   Widget build(BuildContext context) {
+
+    return MaterialApp(
+      title: 'Kulturnatten',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF006A6A)),
+        scaffoldBackgroundColor: const Color(0xFFF5F7F8),
+      ),
+      initialRoute: routeProfile,
+      routes: <String, WidgetBuilder>{
+        //routeAuth: (_) => const AuthScreen(),
+        //routeMap: (_) => const MapScreen(),
+        routeProfile: (_) => const ProfilePage(),
+      },
+    );
+
+
+    /*
     return MaterialApp(
       title: 'Kulturnatten',
       debugShowCheckedModeBanner: false,
@@ -32,10 +53,12 @@ class KulturnattenApp extends StatelessWidget {
         routeAuth: (_) => const AuthScreen(),
         routeMap: (_) => const MapScreen(),
       },
-    );
+    ); */
   }
 }
 
+
+/*
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -382,3 +405,4 @@ String prettyResponse(String body) {
   }
   return body;
 }
+*/
