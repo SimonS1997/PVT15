@@ -3,11 +3,14 @@ package com.kulturnatten.events.service
 import com.kulturnatten.events.model.EventResponse
 import org.springframework.stereotype.Service
 import java.sql.DriverManager
+import org.springframework.beans.factory.annotation.Value
+
 
 @Service
 class EventService {
 
-    private val dbUrl = "jdbc:sqlite:../data/events.db"
+    @Value("\${spring.datasource.url}")
+    private val dbUrl: String
 
     fun getAllEvents(): List<EventResponse> {
         DriverManager.getConnection(dbUrl).use { connection ->

@@ -1,4 +1,4 @@
-package com.kulturnatten.transitservice
+package com.kulturnatten
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
