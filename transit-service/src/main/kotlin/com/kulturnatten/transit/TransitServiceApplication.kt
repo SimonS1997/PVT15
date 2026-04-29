@@ -1,11 +1,11 @@
-package com.kulturnatten
+package com.kulturnatten.transit
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class EventServiceApplication
+class TransitServiceApplication
 
 fun main(args: Array<String>) {
-    runApplication<EventServiceApplication>(*args)
+    runApplication<TransitServiceApplication>(*args)
 }

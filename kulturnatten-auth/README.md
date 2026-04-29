@@ -4,8 +4,16 @@ Local Keycloak for development. The realm `kulturnatten-dev` is auto-imported on
 
 ### Start
 
+The Compose file now lives at the repo root and orchestrates Keycloak together with the backend services. From the repo root:
+
 ```bash
-docker compose -f kulturnatten-auth/docker-compose.yml up -d
+docker compose up -d
+```
+
+To start only Keycloak:
+
+```bash
+docker compose up -d keycloak
 ```
 
 Available at `http://localhost:8081` (Android emulator: `http://10.0.2.2:8081`).
