@@ -23,6 +23,7 @@ services:
       - ./data:/data
     depends_on:
       - keycloak
+    restart: on-failure
 
   transit-service:
     build: ./backend/transit-service
@@ -33,6 +34,7 @@ services:
       AUTH_ISSUER_URI: http://keycloak:8080/realms/kulturnatten-dev
     depends_on:
       - keycloak
+    restart: on-failure
 
   plan-service:
     build: ./backend/plan-service
@@ -46,3 +48,4 @@ services:
       - ./data:/data
     depends_on:
       - keycloak
+    restart: on-failure
