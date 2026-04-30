@@ -3,13 +3,17 @@
 **/.env.*.local
 
 # Gradle build artifacts and caches (per-machine)
-backend/.gradle/
-backend/build/
+**/.gradle/
+**/build/
+**/bin/
 
 # IDE settings (per-user)
 .vscode/
 .idea/
 *.iml
+
+# Runtime SQLite databases (mounted by docker)
+data/*.db
 
 # OS junk
 .DS_Store

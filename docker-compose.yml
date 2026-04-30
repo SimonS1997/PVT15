@@ -8,31 +8,41 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - ./kulturnatten-auth/realm-export.json:/opt/keycloak/data/import/kulturnatten-dev-realm.json:ro
+      - ./backend/kulturnatten-auth/realm-export.json:/opt/keycloak/data/import/kulturnatten-dev-realm.json:ro
     command: start-dev --import-realm
 
   event-service:
-    build: ./event-service
+    build: ./backend/event-service
     container_name: kulturnatten-event-service
     ports:
       - "8082:8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:sqlite:/data/events.db
+      AUTH_ISSUER_URI: http://keycloak:8080/realms/kulturnatten-dev
     volumes:
       - ./data:/data
+    depends_on:
+      - keycloak
 
   transit-service:
-    build: ./transit-service
+    build: ./backend/transit-service
     container_name: kulturnatten-transit-service
     ports:
       - "8083:8083"
+    environment:
+      AUTH_ISSUER_URI: http://keycloak:8080/realms/kulturnatten-dev
+    depends_on:
+      - keycloak
 
   plan-service:
-    build: ./plan-service
+    build: ./backend/plan-service
     container_name: kulturnatten-plan-service
     ports:
       - "8084:8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:sqlite:/data/plans.db
+      AUTH_ISSUER_URI: http://keycloak:8080/realms/kulturnatten-dev
     volumes:
       - ./data:/data
+    depends_on:
+      - keycloak

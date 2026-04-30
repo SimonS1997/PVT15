@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
-import 'package:http/http.dart' as http;
 
 import 'auth_service.dart';
 import 'screens/map_screen.dart';
@@ -73,7 +70,6 @@ class _AuthScreenState extends State<AuthScreen> {
   AuthSession? _session;
   bool _isBusy = true;
   String? _error;
-  String? _backendResult;
 
   @override
   void initState() {
@@ -135,49 +131,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       await _authService.signOut();
-      setState(() {
-        _session = null;
-        _backendResult = null;
-      });
+      setState(() => _session = null);
     } catch (error) {
       setState(() => _error = error.toString());
-    } finally {
-      if (mounted) setState(() => _isBusy = false);
-    }
-  }
-
-  Future<void> _callBackend(AuthConfig config) async {
-    final String? token = _session?.accessToken;
-    final String? baseUrl = config.backendBaseUrl;
-
-    if (token == null || token.isEmpty) {
-      setState(() => _error = 'Sign in first.');
-      return;
-    }
-
-    if (baseUrl == null || baseUrl.isEmpty) {
-      setState(() => _error = 'Set BACKEND_BASE_URL in env/auth.local.json.');
-      return;
-    }
-
-    setState(() {
-      _isBusy = true;
-      _error = null;
-      _backendResult = null;
-    });
-
-    try {
-      final http.Response response = await http.get(
-        Uri.parse('$baseUrl/me'),
-        headers: <String, String>{'Authorization': 'Bearer $token'},
-      );
-
-      setState(() {
-        _backendResult =
-            'GET $baseUrl/me\n${response.statusCode}\n${prettyResponse(response.body)}';
-      });
-    } catch (error) {
-      setState(() => _error = 'Backend request failed: $error');
     } finally {
       if (mounted) setState(() => _isBusy = false);
     }
@@ -226,13 +182,6 @@ class _AuthScreenState extends State<AuthScreen> {
                           icon: const Icon(Icons.logout),
                           label: const Text('Sign out'),
                         ),
-                        OutlinedButton.icon(
-                          onPressed: !_isBusy && isLoggedIn && config != null
-                              ? () => _callBackend(config)
-                              : null,
-                          icon: const Icon(Icons.cloud_outlined),
-                          label: const Text('Call backend'),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -248,13 +197,6 @@ class _AuthScreenState extends State<AuthScreen> {
                       snapshot: snapshot,
                       isConfigured: isConfigured,
                     ),
-                    const SizedBox(height: 16),
-                    if (_backendResult != null)
-                      _MessagePanel(
-                        title: 'Backend',
-                        body: _backendResult!,
-                        color: const Color(0xFF0F766E),
-                      ),
                   ],
                 ),
               ),
@@ -393,15 +335,3 @@ class _MessagePanel extends StatelessWidget {
   }
 }
 
-String prettyResponse(String body) {
-  if (body.isEmpty) return '';
-  try {
-    final Object? decoded = jsonDecode(body);
-    if (decoded is Map<String, dynamic>) {
-      return const JsonEncoder.withIndent('  ').convert(decoded);
-    }
-  } catch (_) {
-    return body;
-  }
-  return body;
-}

@@ -8,7 +8,6 @@ class AuthConfig {
     required this.issuerUrl,
     required this.scopes,
     this.userFlow,
-    this.backendBaseUrl,
   });
 
   final String clientId;
@@ -16,7 +15,6 @@ class AuthConfig {
   final String issuerUrl;
   final List<String> scopes;
   final String? userFlow;
-  final String? backendBaseUrl;
 
   static Future<AuthConfig> load() async {
     return AuthConfig.fromEnvironment();
@@ -38,9 +36,6 @@ class AuthConfig {
       redirectUri: const String.fromEnvironment('AUTH_REDIRECT_URI').trim(),
       issuerUrl: const String.fromEnvironment('AUTH_ISSUER_URL').trim(),
       userFlow: _trimToNull(const String.fromEnvironment('AUTH_USER_FLOW')),
-      backendBaseUrl: _trimToNull(
-        const String.fromEnvironment('BACKEND_BASE_URL'),
-      ),
       scopes: scopes,
     );
   }
