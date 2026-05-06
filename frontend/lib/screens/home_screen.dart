@@ -7,7 +7,8 @@ class HomeScreen extends StatelessWidget {
  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Kulturnatt Stockholm")),
+      appBar: AppBar(
+        title: const Text("Kulturnatt Stockholm")),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -16,14 +17,29 @@ class HomeScreen extends StatelessWidget {
             children: [
 
               //Rubrik
-              const Text(
-                "Stockholms Kulturnatt",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Stockholms Kulturnatt",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.favorite_border,
+                      color: Color(0xFFEC34F8),
+                      size: 30,
+                      ),
+                    onPressed: () {},
+                  )
+                ],
               ),
               const SizedBox(height: 4),
+
+
 
             //Underrubrik
               const Text(
@@ -34,6 +50,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+
 
               //sökfält
               TextField(
@@ -51,8 +68,23 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               //filterbubblor
-
-
+              SizedBox(
+                height: 50,
+                width: double.infinity,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(right: 16),
+                  children: const [
+                    _FilterBubbla(label: "Musik"),
+                    _FilterBubbla(label: "Konst"),
+                    _FilterBubbla(label: "Teater"),
+                    _FilterBubbla(label: "Film"),
+                    _FilterBubbla(label: "Dans"),
+                    _FilterBubbla(label: "Mat"),
+                  ],
+                ),
+              ),
 
               //eventsen
               Expanded(
@@ -99,6 +131,35 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+//filterbubblor klass
+class _FilterBubbla extends StatelessWidget {
+                final String label;
+
+                const _FilterBubbla({required this.label});
+
+                @override
+                Widget build(BuildContext context) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF320E45),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
+                    ),
+                  );
+                }
+              }
 
 //eventkortet
 class _EventCard extends StatelessWidget {
