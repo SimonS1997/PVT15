@@ -7,8 +7,7 @@ class HomeScreen extends StatelessWidget {
  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Kulturnatt Stockholm")),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -25,6 +24,7 @@ class HomeScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                   IconButton(
@@ -54,14 +54,43 @@ class HomeScreen extends StatelessWidget {
 
               //sökfält
               TextField(
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
+                cursorColor: Color(0xFFAE8ACF),
+                
                 decoration: InputDecoration(
                   hintText: "Sök event...",
-                  prefixIcon: const Icon(Icons.search),
+                  hintStyle: const TextStyle(
+                    color: Color(0XFFAE8ACF),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 30,
+                    color: Color(0XFFAE8ACF),
+                  ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Color(0xFF1D0930),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: Color(0xFF461458),
+                      width: 2,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color.fromARGB(255, 102, 48, 122),
+                      width: 2,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF461458),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -76,6 +105,7 @@ class HomeScreen extends StatelessWidget {
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(right: 16),
                   children: const [
+                    _FilterBubbla(label: "Alla"),
                     _FilterBubbla(label: "Musik"),
                     _FilterBubbla(label: "Konst"),
                     _FilterBubbla(label: "Teater"),
@@ -85,6 +115,7 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 15),
 
               //eventsen
               Expanded(
@@ -97,6 +128,7 @@ class HomeScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -112,6 +144,7 @@ class HomeScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold, 
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -141,25 +174,33 @@ class _FilterBubbla extends StatelessWidget {
                 @override
                 Widget build(BuildContext context) {
                   return Container(
-                    margin: const EdgeInsets.only(right: 12),
+                    margin: const EdgeInsets.only(right: 16),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF320E45),
-                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(0xFF420D4D),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: Color(0xFF861C91),
+                        width: 2,
+                      )
                     ),
+                    child: Center(
                     child: Text(
                       label,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: 16,
                       ),
+                    ),
                     ),
                   );
                 }
               }
+
+
 
 //eventkortet
 class _EventCard extends StatelessWidget {
@@ -173,8 +214,12 @@ class _EventCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFF1D0930),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Color(0xFF461458),
+          width: 2,
+        )
       ),
       
       child: Column(
@@ -191,6 +236,7 @@ class _EventCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold, 
+                  color: Colors.white,
                 ),
               ),
 
@@ -203,18 +249,18 @@ class _EventCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 2),
 
 
           //plats
           const Text(
             "Plats", //Ändra till riktig data
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: Color(0xFFAD89CE),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
 
           //genre
           Container(
@@ -229,7 +275,7 @@ class _EventCard extends StatelessWidget {
             child: const Text(
               "Genre", //Ändra till riktig data
               style: TextStyle(
-                color: Colors.white,
+                color: Color(0xFFAE8ACF),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -239,7 +285,6 @@ class _EventCard extends StatelessWidget {
       ),
     );
   }
-
 }
     
 
