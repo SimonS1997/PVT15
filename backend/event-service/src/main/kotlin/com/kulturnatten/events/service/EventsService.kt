@@ -19,7 +19,7 @@ class EventService(
             val statement = connection.prepareStatement(
                 """
                 SELECT id, name, venue, address, time_start, time_end, district,
-                       description, booking_required, nearest_station, latitude, longitude
+                       description, booking_required, nearest_station, latitude, longitude, category
                 FROM events
                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL
                 ORDER BY name
@@ -45,7 +45,8 @@ class EventService(
                         nearestStation =
                             resultSet.getString("nearest_station"),
                         latitude = resultSet.getDouble("latitude"),
-                        longitude = resultSet.getDouble("longitude")
+                        longitude = resultSet.getDouble("longitude"),
+                        category = resultSet.getString("category")
                     )
                 )
             }

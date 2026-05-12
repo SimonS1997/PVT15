@@ -12,5 +12,6 @@ data class EventResponse(
     val bookingRequired: Boolean,
     val nearestStation: String?,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val category: String?
 )
