@@ -5,6 +5,10 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8081
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
     ports:
       - "8081:8080"
     volumes:
@@ -18,7 +22,8 @@ services:
       - "8082:8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:sqlite:/data/events.db
-      AUTH_ISSUER_URI: http://keycloak:8080/realms/kulturnatten-dev
+      AUTH_ISSUER_URI: http://localhost:8081/realms/kulturnatten-dev
+      AUTH_JWK_SET_URI: http://keycloak:8080/realms/kulturnatten-dev/protocol/openid-connect/certs
     volumes:
       - ./data:/data
     depends_on:
@@ -31,7 +36,8 @@ services:
     ports:
       - "8083:8083"
     environment:
-      AUTH_ISSUER_URI: http://keycloak:8080/realms/kulturnatten-dev
+      AUTH_ISSUER_URI: http://localhost:8081/realms/kulturnatten-dev
+      AUTH_JWK_SET_URI: http://keycloak:8080/realms/kulturnatten-dev/protocol/openid-connect/certs
     depends_on:
       - keycloak
     restart: on-failure
@@ -43,7 +49,8 @@ services:
       - "8084:8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:sqlite:/data/plans.db
-      AUTH_ISSUER_URI: http://keycloak:8080/realms/kulturnatten-dev
+      AUTH_ISSUER_URI: http://localhost:8081/realms/kulturnatten-dev
+      AUTH_JWK_SET_URI: http://keycloak:8080/realms/kulturnatten-dev/protocol/openid-connect/certs
     volumes:
       - ./data:/data
     depends_on:
