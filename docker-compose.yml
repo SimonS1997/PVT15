@@ -42,17 +42,19 @@ services:
       - keycloak
     restart: on-failure
 
-  plan-service:
-    build: ./backend/plan-service
-    container_name: kulturnatten-plan-service
-    ports:
-      - "8084:8084"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:sqlite:/data/plans.db
-      AUTH_ISSUER_URI: http://localhost:8081/realms/kulturnatten-dev
-      AUTH_JWK_SET_URI: http://keycloak:8080/realms/kulturnatten-dev/protocol/openid-connect/certs
-    volumes:
-      - ./data:/data
-    depends_on:
-      - keycloak
-    restart: on-failure
+
+
+#  plan-service:
+#    build: ./backend/plan-service
+#    container_name: kulturnatten-plan-service
+#    ports:
+#      - "8084:8084"
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:sqlite:/data/plans.db
+#      AUTH_ISSUER_URI: http://localhost:8081/realms/kulturnatten-dev
+#      AUTH_JWK_SET_URI: http://keycloak:8080/realms/kulturnatten-dev/protocol/openid-connect/certs
+#    volumes:
+#      - ./data:/data
+#    depends_on:
+#      - keycloak
+#    restart: on-failure

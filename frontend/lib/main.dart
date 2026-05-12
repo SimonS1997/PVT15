@@ -33,15 +33,19 @@ class KulturnattenApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF006A6A)),
         scaffoldBackgroundColor: const Color(0xFFF5F7F8),
       ),
-      initialRoute: '/',
+
+
+      //initialRoute: '/',
+      initialRoute: routeMap,
       routes: <String, WidgetBuilder>{
         '/': (_) => const AuthGate(),
         routeMap: (_) => const MapScreen(),
         routeProfile: (_) => const ProfilePage(),
         routeHome: (_) => const HomeScreen(),
-        routeLogin: (_) => const LoginScreen(),
+        //routeLogin: (_) => const LoginScreen(),
       },
     );
+
 
 
     /*
