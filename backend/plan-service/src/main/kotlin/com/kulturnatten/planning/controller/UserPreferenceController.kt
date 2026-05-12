@@ -20,6 +20,11 @@ class UserPreferenceController(
     private val service: UserPreferenceService,
 ) {
 
+    @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getAll(@AuthenticationPrincipal jwt: Jwt): Map<String, JsonNode> {
+        return service.getAll(jwt.subject)
+    }
+
     @GetMapping("/{key}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun get(
         @PathVariable key: String,
@@ -49,5 +54,10 @@ class UserPreferenceController(
         } else {
             ResponseEntity.notFound().build()
         }
+    }
+
+    @DeleteMapping
+    fun deleteAll(@AuthenticationPrincipal jwt: Jwt): Map<String, Int> {
+        return mapOf("deleted" to service.deleteAll(jwt.subject))
     }
 }

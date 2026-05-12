@@ -10,4 +10,7 @@ interface UserPreferenceRepository : JpaRepository<UserPreference, Long> {
 
     @Transactional
     fun deleteByUserIdAndKey(userId: String, key: String): Long
+
+    @Transactional
+    fun deleteAllByUserId(userId: String): Long
 }

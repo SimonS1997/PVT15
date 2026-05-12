@@ -60,9 +60,11 @@ Frontend (`frontend/`) konsumerar dessa REST-API:er och skickar med JWT från Ke
 - Egen SQLite-databas (`/data/plans.db`) skild från event-katalogen.
 
 **Endpoints** — alla kräver giltig JWT, alla operationer scope:as till `jwt.subject`:
-- `GET /api/preferences/{key}` → preferensens JSON-värde, eller 404.
+- `GET /api/preferences` → alla preferenser för inloggad användare som `{ key: value }` (data-export).
+- `GET /api/preferences/{key}` → en preferens, eller 404.
 - `PUT /api/preferences/{key}` med JSON-body → upsert (skapar eller uppdaterar).
 - `DELETE /api/preferences/{key}` → 204 om raderad, 404 om okänd.
+- `DELETE /api/preferences` → raderar alla preferenser för användaren, returnerar `{ deleted: n }`.
 
 **Datamodell**
 
