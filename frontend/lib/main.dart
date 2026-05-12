@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 
 import 'auth_service.dart';
+import 'screens/auth_gate.dart';
+import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/profile_page.dart';
 import 'screens/home_screen.dart';
@@ -14,6 +16,7 @@ const String routeAuth = '/';
 const String routeMap = '/map';
 const String routeProfile = '/profile';
 const String routeHome = '/home';
+const String routeLogin = '/login';
 
 class KulturnattenApp extends StatelessWidget {
   const KulturnattenApp({super.key});
@@ -30,12 +33,13 @@ class KulturnattenApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF006A6A)),
         scaffoldBackgroundColor: const Color(0xFFF5F7F8),
       ),
-      initialRoute: routeHome,
+      initialRoute: '/',
       routes: <String, WidgetBuilder>{
-        routeAuth: (_) => const AuthScreen(),
+        '/': (_) => const AuthGate(),
         routeMap: (_) => const MapScreen(),
         routeProfile: (_) => const ProfilePage(),
         routeHome: (_) => const HomeScreen(),
+        routeLogin: (_) => const LoginScreen(),
       },
     );
 

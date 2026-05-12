@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 
 class AuthConfig {
   AuthConfig({
@@ -24,7 +27,7 @@ class AuthConfig {
     final List<String> scopes =
         const String.fromEnvironment(
               'AUTH_SCOPES',
-              defaultValue: 'openid,profile,offline_access',
+              defaultValue: 'openid,profile,email,offline_access',
             )
             .split(',')
             .map((String value) => value.trim())
@@ -32,9 +35,18 @@ class AuthConfig {
             .toList();
 
     return AuthConfig(
-      clientId: const String.fromEnvironment('AUTH_CLIENT_ID').trim(),
-      redirectUri: const String.fromEnvironment('AUTH_REDIRECT_URI').trim(),
-      issuerUrl: const String.fromEnvironment('AUTH_ISSUER_URL').trim(),
+      clientId: const String.fromEnvironment(
+        'AUTH_CLIENT_ID',
+        defaultValue: 'kulturnatten-mobile',
+      ).trim(),
+      redirectUri: const String.fromEnvironment(
+        'AUTH_REDIRECT_URI',
+        defaultValue: 'com.kulturnatten.app:/oauthredirect',
+      ).trim(),
+      issuerUrl: const String.fromEnvironment(
+        'AUTH_ISSUER_URL',
+        defaultValue: 'http://10.0.2.2:8081/realms/kulturnatten-dev',
+      ).trim(),
       userFlow: _trimToNull(const String.fromEnvironment('AUTH_USER_FLOW')),
       scopes: scopes,
     );
@@ -139,6 +151,41 @@ class AuthService {
     return _session!;
   }
 
+  Future<AuthSession> signInWithPassword(
+    AuthConfig config, {
+    required String username,
+    required String password,
+  }) async {
+    _config = config;
+
+    final response = await http.post(
+      Uri.parse('${config.issuerUrl}/protocol/openid-connect/token'),
+      body: {
+        'client_id': config.clientId,
+        'grant_type': 'password',
+        'username': username,
+        'password': password,
+        'scope': config.scopes.join(' '),
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Inloggning misslyckades');
+    }
+
+    final data = jsonDecode(response.body);
+    _session = AuthSession(
+      accessToken: data['access_token'],
+      idToken: data['id_token'],
+      refreshToken: data['refresh_token'],
+      accessTokenExpirationDateTime:
+          DateTime.now().add(Duration(seconds: data['expires_in'] ?? 0)),
+    );
+
+    await _persist(_session!);
+    return _session!;
+  }
+
   Future<AuthSession?> loadPersistedSession(AuthConfig config) async {
     _config = config;
 
@@ -179,25 +226,6 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    final String? idToken = _session?.idToken;
-    final AuthConfig? config = _config;
-
-    if (config != null) {
-      try {
-        await _appAuth.endSession(
-          EndSessionRequest(
-            idTokenHint: idToken,
-            issuer: config.issuerUrl,
-            postLogoutRedirectUrl: config.redirectUri,
-            allowInsecureConnections: true,
-          ),
-        );
-      } catch (_) {
-        // Best-effort: continue with local cleanup even if end-session
-        // is cancelled by the user or rejected by the IdP.
-      }
-    }
-
     _session = null;
     await _clearStorage();
   }

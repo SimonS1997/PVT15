@@ -29,11 +29,11 @@ class HomeScreen extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(
-                      Icons.favorite_border,
+                      Icons.person_outline,
                       color: Color(0xFFEC34F8),
                       size: 30,
                       ),
-                    onPressed: () {},
+                    onPressed: () => Navigator.pushNamed(context, '/profile'),
                   )
                 ],
               ),
