@@ -43,54 +43,49 @@ class _EventMapViewState extends State<EventMapView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF12001F),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                _MapHeader(
-                  onBack: () => Navigator.maybePop(context),
-                ),
-                Expanded(
-                  child: GoogleMap(
-                    initialCameraPosition: const CameraPosition(
-                      target: stockholm,
-                      zoom: 12,
-                    ),
-                    markers: markers,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: false,
-                    mapToolbarEnabled: false,
+    return SafeArea(
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              _MapHeader(
+                onBack: () => Navigator.maybePop(context),
+              ),
+              Expanded(
+                child: GoogleMap(
+                  initialCameraPosition: const CameraPosition(
+                    target: stockholm,
+                    zoom: 12,
                   ),
-                ),
-              ],
-            ),
-
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 88,
-              child: _FilterBar(),
-            ),
-
-            if (selectedEvent != null)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _EventInfoCard(
-                  event: selectedEvent!,
-                  onClose: () {
-                    setState(() {
-                      selectedEvent = null;
-                    });
-                  },
+                  markers: markers,
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
+                  mapToolbarEnabled: false,
                 ),
               ),
-          ],
-        ),
+            ],
+          ),
+          const Positioned(
+            left: 16,
+            right: 16,
+            bottom: 25,
+            child: _FilterBar(),
+          ),
+          if (selectedEvent != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _EventInfoCard(
+                event: selectedEvent!,
+                onClose: () {
+                  setState(() {
+                    selectedEvent = null;
+                  });
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -185,12 +180,10 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: [
+      children: const [
         _FilterChip(label: 'Alla', selected: true),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         _FilterChip(label: 'Min plan', selected: false),
-        const SizedBox(width: 8),
-        _FilterChip(label: 'I närheten', selected: false),
       ],
     );
   }
