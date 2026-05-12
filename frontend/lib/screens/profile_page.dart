@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
 import '../services/plan_api_service.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,7 +15,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final PlanApiService _api =
-      PlanApiService(baseUrl: 'http://10.0.2.2:8084');
+  PlanApiService(baseUrl: 'http://10.0.2.2:8084');
 
   AuthConfig? _config;
   Map<String, dynamic>? _preferences;
@@ -29,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _init() async {
     final config = await AuthConfig.load();
+
     if (!config.isConfigured) {
       setState(() {
         _loading = false;
@@ -36,6 +38,7 @@ class _ProfilePageState extends State<ProfilePage> {
       });
       return;
     }
+
     _config = config;
 
     if (AuthService.instance.session == null) {
@@ -46,17 +49,21 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() => _loading = false);
       return;
     }
+
     await _loadPreferences();
   }
 
   Future<void> _loadPreferences() async {
     final token = AuthService.instance.session?.accessToken;
+
     if (token == null) {
       setState(() => _loading = false);
       return;
     }
+
     try {
       final data = await _api.fetchAll(token);
+
       setState(() {
         _preferences = data;
         _loading = false;
@@ -71,11 +78,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _signIn() async {
     final result = await Navigator.pushNamed(context, '/login');
+
     if (result == true) {
       setState(() {
         _loading = true;
         _error = null;
       });
+
       await _loadPreferences();
     }
   }
@@ -91,7 +100,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         content: const Text(
           'Detta tar bort alla dina sparade preferenser. '
-          'Åtgärden kan inte ångras.',
+              'Åtgärden kan inte ångras.',
           style: TextStyle(color: Color(0xFFAE8ACF)),
         ),
         actions: [
@@ -109,19 +118,26 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+
     if (confirmed != true) return;
 
     final token = AuthService.instance.session?.accessToken;
+
     if (token == null) return;
+
     try {
       final count = await _api.deleteAll(token);
+
       if (!mounted) return;
+
       setState(() => _preferences = {});
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Raderade $count poster.')),
       );
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Kunde inte radera: $e')),
       );
@@ -130,18 +146,48 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _signOut() async {
     await AuthService.instance.signOut();
+
     if (!mounted) return;
+
     Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+  }
+
+  void _onBottomNavTap(int index) {
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+
+      case 1:
+        Navigator.pushReplacementNamed(context, '/map');
+        break;
+
+      case 2:
+        break; // byt till '/plan' när den routen finns
+
+      case 3:
+        break;
+    }
   }
 
   String? _email() {
     final idToken = AuthService.instance.session?.idToken;
+
     if (idToken == null) return null;
+
     final parts = idToken.split('.');
+
     if (parts.length != 3) return null;
+
     try {
-      final decoded = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      final decoded = utf8.decode(
+        base64Url.decode(
+          base64Url.normalize(parts[1]),
+        ),
+      );
+
       final claims = jsonDecode(decoded) as Map<String, dynamic>;
+
       return (claims['email'] ?? claims['preferred_username']) as String?;
     } catch (_) {
       return null;
@@ -154,14 +200,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       backgroundColor: Colors.black,
+
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         title: const Text('Min profil'),
       ),
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
+
           child: ListView(
             children: [
               const Center(
@@ -171,16 +220,21 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: Color(0xFFEC34F8),
                 ),
               ),
+
               const SizedBox(height: 8),
+
               Center(
                 child: Text(
-                  loggedIn ? (_email() ?? 'Inloggad användare') : 'Inte inloggad',
+                  loggedIn
+                      ? (_email() ?? 'Inloggad användare')
+                      : 'Inte inloggad',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                   ),
                 ),
               ),
+
               const SizedBox(height: 32),
 
               const Text(
@@ -191,20 +245,25 @@ class _ProfilePageState extends State<ProfilePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               const Text(
-                'Vi lagrar dina preferenser'
-                'så att de finns kvar nästa gång du loggar in. '
-                'Datan kan tas bort när du vill.',
+                'Vi lagrar dina preferenser '
+                    'så att de finns kvar nästa gång du loggar in. '
+                    'Datan kan tas bort när du vill.',
                 style: TextStyle(color: Color(0xFFAE8ACF)),
               ),
+
               const SizedBox(height: 12),
+
               _PreferencesCard(
                 loading: _loading,
                 error: _error,
                 loggedIn: loggedIn,
                 preferences: _preferences,
               ),
+
               const SizedBox(height: 24),
 
               if (!loggedIn)
@@ -230,8 +289,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
+
                   const SizedBox(height: 12),
                 ],
+
                 OutlinedButton.icon(
                   onPressed: _signOut,
                   icon: const Icon(Icons.logout),
@@ -243,9 +304,16 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ],
+
+              const SizedBox(height: 24),
             ],
           ),
         ),
+      ),
+
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 3,
+        onTap: _onBottomNavTap,
       ),
     );
   }
@@ -268,11 +336,16 @@ class _PreferencesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
         color: const Color(0xFF1D0930),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF461458), width: 2),
+        border: Border.all(
+          color: const Color(0xFF461458),
+          width: 2,
+        ),
       ),
+
       child: _content(),
     );
   }
@@ -282,25 +355,40 @@ class _PreferencesCard extends StatelessWidget {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(8),
-          child: CircularProgressIndicator(color: Color(0xFFEC34F8)),
+          child: CircularProgressIndicator(
+            color: Color(0xFFEC34F8),
+          ),
         ),
       );
     }
+
     if (error != null) {
-      return Text(error!, style: const TextStyle(color: Color(0xFFAE8ACF)));
+      return Text(
+        error!,
+        style: const TextStyle(
+          color: Color(0xFFAE8ACF),
+        ),
+      );
     }
+
     if (!loggedIn) {
       return const Text(
         'Logga in för att se vilken data vi lagrar om dig.',
-        style: TextStyle(color: Color(0xFFAE8ACF)),
+        style: TextStyle(
+          color: Color(0xFFAE8ACF),
+        ),
       );
     }
+
     if (preferences == null || preferences!.isEmpty) {
       return const Text(
         'Inga sparade preferenser ännu.',
-        style: TextStyle(color: Color(0xFFAE8ACF)),
+        style: TextStyle(
+          color: Color(0xFFAE8ACF),
+        ),
       );
     }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: preferences!.entries.map((e) {
@@ -308,7 +396,9 @@ class _PreferencesCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Text(
             '${e.key}: ${e.value}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+            ),
           ),
         );
       }).toList(),

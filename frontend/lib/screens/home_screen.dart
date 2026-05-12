@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+
             children: [
 
-              //Rubrik
+              // Rubrik
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                 children: [
                   const Text(
                     "Stockholms Kulturnatt",
@@ -27,21 +31,23 @@ class HomeScreen extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
+
                   IconButton(
                     icon: const Icon(
                       Icons.person_outline,
                       color: Color(0xFFEC34F8),
                       size: 30,
-                      ),
-                    onPressed: () => Navigator.pushNamed(context, '/profile'),
-                  )
+                    ),
+
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/profile'),
+                  ),
                 ],
               ),
+
               const SizedBox(height: 4),
 
-
-
-            //Underrubrik
+              // Underrubrik
               const Text(
                 "18 April 2026",
                 style: TextStyle(
@@ -49,44 +55,54 @@ class HomeScreen extends StatelessWidget {
                   color: Color(0xFFAE8ACF),
                 ),
               ),
+
               const SizedBox(height: 16),
 
-
-              //sökfält
+              // Sökfält
               TextField(
                 style: const TextStyle(
                   color: Colors.white,
                 ),
-                cursorColor: Color(0xFFAE8ACF),
-                
+
+                cursorColor: const Color(0xFFAE8ACF),
+
                 decoration: InputDecoration(
                   hintText: "Sök event...",
+
                   hintStyle: const TextStyle(
                     color: Color(0XFFAE8ACF),
                   ),
+
                   prefixIcon: const Icon(
                     Icons.search,
                     size: 30,
                     color: Color(0XFFAE8ACF),
                   ),
+
                   filled: true,
-                  fillColor: Color(0xFF1D0930),
+                  fillColor: const Color(0xFF1D0930),
+
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
+
+                    borderSide: const BorderSide(
                       color: Color(0xFF461458),
                       width: 2,
                     ),
                   ),
+
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+
                     borderSide: const BorderSide(
                       color: Color.fromARGB(255, 102, 48, 122),
                       width: 2,
                     ),
                   ),
+
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+
                     borderSide: const BorderSide(
                       color: Color(0xFF461458),
                       width: 2,
@@ -94,16 +110,19 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
-              //filterbubblor
+              // Filterbubblor
               SizedBox(
                 height: 50,
                 width: double.infinity,
+
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(right: 16),
+
                   children: const [
                     _FilterBubbla(label: "Alla"),
                     _FilterBubbla(label: "Musik"),
@@ -115,12 +134,14 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
               const SizedBox(height: 15),
 
-              //eventsen
+              // Events
               Expanded(
                 child: ListView(
                   physics: const BouncingScrollPhysics(),
+
                   children: [
 
                     const Text(
@@ -131,117 +152,157 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
+
                     const SizedBox(height: 12),
 
-                    //låtsasdata
+                    // Låtsasdata
                     _EventCard(title: "Museum Night"),
                     _EventCard(title: "Konsert"),
-                    _EventCard(title: "Konstutatällning"),
+                    _EventCard(title: "Konstutställning"),
+
                     const SizedBox(height: 24),
 
                     const Text(
                       "I närheten",
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
+
                     const SizedBox(height: 12),
 
-                    //låtsasdata
-                    _EventCard(title: "musik"),
-                    _EventCard(title: "utställning"),
-                    _EventCard(title: "Konstutatällning"),
-
+                    // Låtsasdata
+                    _EventCard(title: "Musik"),
+                    _EventCard(title: "Utställning"),
+                    _EventCard(title: "Konstutställning"),
                   ],
                 ),
               ),
-             ],
-            ),
+            ],
           ),
-         ),
+        ),
+      ),
+
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 0,
+
+        onTap: (index) {
+          switch (index) {
+
+            case 0:
+              break;
+
+            case 1:
+              Navigator.pushReplacementNamed(context, '/map');
+              break;
+
+            case 2:
+              break;
+
+            case 3:
+              Navigator.pushReplacementNamed(context, '/profile');
+              break;
+          }
+        },
+      ),
     );
   }
 }
 
-//filterbubblor klass
+// Filterbubblor
 class _FilterBubbla extends StatelessWidget {
-                final String label;
+  final String label;
 
-                const _FilterBubbla({required this.label});
+  const _FilterBubbla({
+    required this.label,
+  });
 
-                @override
-                Widget build(BuildContext context) {
-                  return Container(
-                    margin: const EdgeInsets.only(right: 16),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF420D4D),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: Color(0xFF861C91),
-                        width: 2,
-                      )
-                    ),
-                    child: Center(
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
-                    ),
-                  );
-                }
-              }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
 
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
 
+      decoration: BoxDecoration(
+        color: const Color(0xFF420D4D),
 
-//eventkortet
+        borderRadius: BorderRadius.circular(30),
+
+        border: Border.all(
+          color: const Color(0xFF861C91),
+          width: 2,
+        ),
+      ),
+
+      child: Center(
+        child: Text(
+          label,
+
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Eventkort
 class _EventCard extends StatelessWidget {
   final String title;
 
-  const _EventCard({required this.title});
+  const _EventCard({
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
+
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
-        color: Color(0xFF1D0930),
+        color: const Color(0xFF1D0930),
+
         borderRadius: BorderRadius.circular(12),
+
         border: Border.all(
-          color: Color(0xFF461458),
+          color: const Color(0xFF461458),
           width: 2,
-        )
+        ),
       ),
-      
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
+
         children: [
 
-          //titel och tid
+          // Titel och tid
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
             children: [
               Text(
                 title,
+
                 style: const TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold, 
+                  fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
 
               const Text(
-                "Tid", //Ändra senare
+                "Tid",
                 style: TextStyle(
                   fontSize: 15,
                   color: Color(0xFFEC34F8),
@@ -249,48 +310,45 @@ class _EventCard extends StatelessWidget {
               ),
             ],
           ),
+
           const SizedBox(height: 2),
 
-
-          //plats
+          // Plats
           const Text(
-            "Plats", //Ändra till riktig data
+            "Plats",
+
             style: TextStyle(
               fontSize: 15,
               color: Color(0xFFAD89CE),
             ),
           ),
+
           const SizedBox(height: 15),
 
-          //genre
+          // Genre
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 6,
             ),
+
             decoration: BoxDecoration(
-              color:Color(0xFF320E45),
+              color: const Color(0xFF320E45),
               borderRadius: BorderRadius.circular(15),
             ),
+
             child: const Text(
-              "Genre", //Ändra till riktig data
+              "Genre",
+
               style: TextStyle(
                 color: Color(0xFFAE8ACF),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
-            )
-          )
-        ]
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-    
-
-  
-      
-
-            
-            
-        
