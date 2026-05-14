@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../auth_service.dart';
 import '../models/event_location.dart';
 import '../services/event_api_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'event_map_view.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key, this.accessToken});
-
-  final String? accessToken;
+  const MapScreen({super.key});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -25,7 +24,12 @@ class _MapScreenState extends State<MapScreen> {
       baseUrl: 'http://10.0.2.2:8082',
     );
 
-    eventsFuture = service.fetchEvents(accessToken: widget.accessToken);
+    eventsFuture = _loadEvents(service);
+  }
+
+  Future<List<EventLocation>> _loadEvents(EventApiService service) async {
+    final token = await AuthService.instance.validAccessToken();
+    return service.fetchEvents(accessToken: token);
   }
 
   void _onBottomNavTap(int index) {

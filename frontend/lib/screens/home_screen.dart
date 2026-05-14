@@ -53,8 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
+      final token = await AuthService.instance.validAccessToken();
       final events = await _api.fetchEvents(
-        accessToken: AuthService.instance.session?.accessToken,
+        accessToken: token,
         category: _toCategory(_selectedLabel),
         search: _searchTerm,
       );

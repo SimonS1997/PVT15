@@ -125,6 +125,25 @@ class AuthService {
   bool get isLoggedIn => _session != null;
   AuthSession? get session => _session;
 
+  Future<String?> validAccessToken() async {
+    if (_session == null) return null;
+    final s = _session!;
+
+    final expiry = s.accessTokenExpirationDateTime;
+    final stillValid = expiry != null &&
+        expiry.isAfter(DateTime.now().add(const Duration(seconds: 30)));
+
+    if (stillValid) return s.accessToken;
+    if (s.refreshToken == null) return s.accessToken;
+
+    final config = _config ?? await AuthConfig.load();
+    final refreshed = await _refresh(config, refreshToken: s.refreshToken!);
+    if (refreshed == null) return s.accessToken;
+
+    _session = refreshed;
+    return refreshed.accessToken;
+  }
+
   Future<AuthSession> signIn(AuthConfig config) async {
     _config = config;
 

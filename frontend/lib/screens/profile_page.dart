@@ -46,7 +46,7 @@ class _ProfilePageState extends State<ProfilePage> {
       await AuthService.instance.loadPersistedSession(config);
     }
 
-    final token = AuthService.instance.session?.accessToken;
+    final token = await AuthService.instance.validAccessToken();
     if (token == null) {
       setState(() => _loading = false);
       return;
@@ -101,7 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (confirmed != true) return;
 
-    final token = AuthService.instance.session?.accessToken;
+    final token = await AuthService.instance.validAccessToken();
     if (token == null) return;
 
     try {
