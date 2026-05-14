@@ -1,8 +1,85 @@
 import 'package:flutter/material.dart';
+
+import '../auth_service.dart';
+import '../models/event_location.dart';
+import '../services/event_api_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final EventApiService _api =
+      EventApiService(baseUrl: 'http://10.0.2.2:8082');
+
+  List<EventLocation> _events = [];
+  bool _loading = true;
+  String? _error;
+  String _selectedLabel = "Alla";
+  String _searchTerm = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
+  }
+
+  // Översätter UI-label till backend-kategori
+  String? _toCategory(String label) {
+    switch (label) {
+      case "Musik":
+        return "MUSIC";
+      case "Konst":
+        return "ART";
+      case "Teater":
+        return "THEATRE";
+      case "Film":
+        return "FILM";
+      case "Dans":
+        return "DANCE";
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final events = await _api.fetchEvents(
+        accessToken: AuthService.instance.session?.accessToken,
+        category: _toCategory(_selectedLabel),
+        search: _searchTerm,
+      );
+
+      setState(() {
+        _events = events;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = "Kunde inte hämta event: $e";
+      });
+    }
+  }
+
+  void _onCategoryTap(String label) {
+    setState(() => _selectedLabel = label);
+    _loadEvents();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _searchTerm = value);
+    _loadEvents();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +125,8 @@ class HomeScreen extends StatelessWidget {
                 ),
 
                 cursorColor: const Color(0xFFAE8ACF),
+
+                onChanged: _onSearchChanged,
 
                 decoration: InputDecoration(
                   hintText: "Sök event...",
@@ -106,14 +185,37 @@ class HomeScreen extends StatelessWidget {
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(right: 16),
 
-                  children: const [
-                    _FilterBubbla(label: "Alla"),
-                    _FilterBubbla(label: "Musik"),
-                    _FilterBubbla(label: "Konst"),
-                    _FilterBubbla(label: "Teater"),
-                    _FilterBubbla(label: "Film"),
-                    _FilterBubbla(label: "Dans"),
-                    _FilterBubbla(label: "Mat"),
+                  children: [
+                    _FilterBubbla(
+                      label: "Alla",
+                      selected: _selectedLabel == "Alla",
+                      onTap: () => _onCategoryTap("Alla"),
+                    ),
+                    _FilterBubbla(
+                      label: "Musik",
+                      selected: _selectedLabel == "Musik",
+                      onTap: () => _onCategoryTap("Musik"),
+                    ),
+                    _FilterBubbla(
+                      label: "Konst",
+                      selected: _selectedLabel == "Konst",
+                      onTap: () => _onCategoryTap("Konst"),
+                    ),
+                    _FilterBubbla(
+                      label: "Teater",
+                      selected: _selectedLabel == "Teater",
+                      onTap: () => _onCategoryTap("Teater"),
+                    ),
+                    _FilterBubbla(
+                      label: "Film",
+                      selected: _selectedLabel == "Film",
+                      onTap: () => _onCategoryTap("Film"),
+                    ),
+                    _FilterBubbla(
+                      label: "Dans",
+                      selected: _selectedLabel == "Dans",
+                      onTap: () => _onCategoryTap("Dans"),
+                    ),
                   ],
                 ),
               ),
@@ -122,46 +224,7 @@ class HomeScreen extends StatelessWidget {
 
               // Events
               Expanded(
-                child: ListView(
-                  physics: const BouncingScrollPhysics(),
-
-                  children: [
-
-                    const Text(
-                      "Börjar snart",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Låtsasdata
-                    _EventCard(title: "Museum Night"),
-                    _EventCard(title: "Konsert"),
-                    _EventCard(title: "Konstutställning"),
-
-                    const SizedBox(height: 24),
-
-                    const Text(
-                      "I närheten",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Låtsasdata
-                    _EventCard(title: "Musik"),
-                    _EventCard(title: "Utställning"),
-                    _EventCard(title: "Konstutställning"),
-                  ],
-                ),
+                child: _buildEventList(),
               ),
             ],
           ),
@@ -192,44 +255,102 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildEventList() {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFEC34F8),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Text(
+          _error!,
+          style: const TextStyle(color: Color(0xFFAE8ACF)),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    if (_events.isEmpty) {
+      return const Center(
+        child: Text(
+          "Inga event matchade.",
+          style: TextStyle(color: Color(0xFFAE8ACF)),
+        ),
+      );
+    }
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+
+      children: [
+        const Text(
+          "Event",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        for (var event in _events) _EventCard(event: event),
+      ],
+    );
+  }
 }
 
 // Filterbubblor
 class _FilterBubbla extends StatelessWidget {
   final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   const _FilterBubbla({
     required this.label,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 16),
+    return GestureDetector(
+      onTap: onTap,
 
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 10,
-      ),
+      child: Container(
+        margin: const EdgeInsets.only(right: 16),
 
-      decoration: BoxDecoration(
-        color: const Color(0xFF420D4D),
-
-        borderRadius: BorderRadius.circular(30),
-
-        border: Border.all(
-          color: const Color(0xFF861C91),
-          width: 2,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 10,
         ),
-      ),
 
-      child: Center(
-        child: Text(
-          label,
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFF861C91)
+              : const Color(0xFF420D4D),
 
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
+          borderRadius: BorderRadius.circular(30),
+
+          border: Border.all(
+            color: const Color(0xFF861C91),
+            width: 2,
+          ),
+        ),
+
+        child: Center(
+          child: Text(
+            label,
+
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
           ),
         ),
       ),
@@ -239,10 +360,10 @@ class _FilterBubbla extends StatelessWidget {
 
 // Eventkort
 class _EventCard extends StatelessWidget {
-  final String title;
+  final EventLocation event;
 
   const _EventCard({
-    required this.title,
+    required this.event,
   });
 
   @override
@@ -274,19 +395,21 @@ class _EventCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
             children: [
-              Text(
-                title,
+              Expanded(
+                child: Text(
+                  event.name,
 
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
 
-              const Text(
-                "Tid",
-                style: TextStyle(
+              Text(
+                event.timeStart ?? "",
+                style: const TextStyle(
                   fontSize: 15,
                   color: Color(0xFFEC34F8),
                 ),
@@ -297,10 +420,10 @@ class _EventCard extends StatelessWidget {
           const SizedBox(height: 2),
 
           // Plats
-          const Text(
-            "Plats",
+          Text(
+            event.venue,
 
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 15,
               color: Color(0xFFAD89CE),
             ),
@@ -308,7 +431,7 @@ class _EventCard extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          // Genre
+          // Kategori
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 10,
@@ -320,10 +443,10 @@ class _EventCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(15),
             ),
 
-            child: const Text(
-              "Genre",
+            child: Text(
+              event.category ?? "Övrigt",
 
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFFAE8ACF),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,

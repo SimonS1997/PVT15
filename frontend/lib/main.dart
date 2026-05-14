@@ -35,8 +35,7 @@ class KulturnattenApp extends StatelessWidget {
       ),
 
 
-      //initialRoute: '/',
-      initialRoute: routeMap,
+      initialRoute: '/',
       routes: <String, WidgetBuilder>{
         '/': (_) => const AuthGate(),
         routeMap: (_) => const MapScreen(),

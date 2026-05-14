@@ -13,6 +13,7 @@ class EventLocation {
     this.district,
     this.description,
     this.nearestStation,
+    this.category,
     this.bookingRequired = false,
   });
 
@@ -27,6 +28,7 @@ class EventLocation {
   final String? district;
   final String? description;
   final String? nearestStation;
+  final String? category;
   final bool bookingRequired;
 
   LatLng get position => LatLng(latitude, longitude);
@@ -43,6 +45,7 @@ class EventLocation {
       description: json['description'] as String?,
       bookingRequired: json['bookingRequired'] as bool? ?? false,
       nearestStation: json['nearestStation'] as String?,
+      category: json['category'] as String?,
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
     );
