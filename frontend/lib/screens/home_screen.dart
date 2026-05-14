@@ -19,30 +19,13 @@ class HomeScreen extends StatelessWidget {
             children: [
 
               // Rubrik
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                children: [
-                  const Text(
-                    "Stockholms Kulturnatt",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  IconButton(
-                    icon: const Icon(
-                      Icons.person_outline,
-                      color: Color(0xFFEC34F8),
-                      size: 30,
-                    ),
-
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/profile'),
-                  ),
-                ],
+              const Text(
+                "Stockholms Kulturnatt",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
 
               const SizedBox(height: 4),

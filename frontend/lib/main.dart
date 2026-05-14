@@ -42,7 +42,7 @@ class KulturnattenApp extends StatelessWidget {
         routeMap: (_) => const MapScreen(),
         routeProfile: (_) => const ProfilePage(),
         routeHome: (_) => const HomeScreen(),
-        //routeLogin: (_) => const LoginScreen(),
+        routeLogin: (_) => const LoginScreen(),
       },
     );
 
