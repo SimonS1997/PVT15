@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
+import '../managers/saved_events_manager.dart';
 import '../services/plan_api_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 
@@ -65,6 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _signOut() async {
     await AuthService.instance.signOut();
+    SavedEventsManager.instance.clear();
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
   }
@@ -277,21 +279,28 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildSavedCard(int savedCount) { //sparade evenemang och min plan kort
-    return _buildCard(
-      children: [
-        _buildRow(
-          icon: Icons.favorite_border,
-          title: 'Sparade evenemang',
-          subtitle: _loading ? 'Laddar…' : '$savedCount sparade',
-          isLast: false,
-        ),
-        _buildRow(
-          icon: Icons.calendar_today_outlined,
-          title: 'Min plan',
-          subtitle: 'Inga evenemang',
-          isLast: true,
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: SavedEventsManager.instance,
+      builder: (context, child) {
+        final realSavedCount = SavedEventsManager.instance.savedEventIds.length;
+
+        return _buildCard(
+          children: [
+            _buildRow(
+              icon: Icons.favorite_border,
+              title: 'Sparade evenemang',
+              subtitle: _loading ? 'Laddar…' : '$realSavedCount sparade',
+              isLast: false,
+            ),
+            _buildRow(
+              icon: Icons.calendar_today_outlined,
+              title: 'Min plan',
+              subtitle: realSavedCount > 0 ? '$realSavedCount evenemang' : 'Inga evenemang',
+              isLast: true,
+            ),
+          ],
+        );
+      },
     );
   }
 

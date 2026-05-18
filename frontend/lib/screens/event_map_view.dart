@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
 
 class EventMapView extends StatefulWidget {
@@ -229,77 +230,93 @@ class _EventInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF1B0030),
-        border: Border(
-          top: BorderSide(color: Color(0xFF662080)),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const _CategoryBadge(label: 'Event'),
-              const SizedBox(width: 10),
-              const Text(
-                '18:00',
-                style: TextStyle(
-                  color: Color(0xFFD84DFF),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: onClose,
-                icon: const Icon(Icons.close),
-                color: Colors.white,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            event.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+    return ListenableBuilder(
+      listenable: SavedEventsManager.instance,
+      builder: (context, child) {
+        final bool isSaved = SavedEventsManager.instance.isSaved(event.id);
+
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1B0030),
+            border: Border(
+              top: BorderSide(color: Color(0xFF662080)),
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.location_on_outlined,
-                color: Color(0xFFD4A4FF),
-                size: 18,
+              Row(
+                children: [
+                  const _CategoryBadge(label: 'Event'),
+                  const SizedBox(width: 10),
+                  const Text(
+                    '18:00',
+                    style: TextStyle(
+                      color: Color(0xFFD84DFF),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () {
+                      SavedEventsManager.instance.toggleSave(event.id);
+                    },
+                    icon: Icon(
+                      isSaved ? Icons.favorite : Icons.favorite_border,
+                      color: const Color(0xFFD84DFF),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close),
+                    color: Colors.white,
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  event.venue,
-                  style: const TextStyle(
+              const SizedBox(height: 8),
+              Text(
+                event.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
                     color: Color(0xFFD4A4FF),
-                    fontSize: 14,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      event.venue,
+                      style: const TextStyle(
+                        color: Color(0xFFD4A4FF),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (event.address.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  event.address,
+                  style: const TextStyle(
+                    color: Color(0xFFBFA6D9),
+                    fontSize: 13,
                   ),
                 ),
-              ),
+              ],
             ],
           ),
-          if (event.address.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              event.address,
-              style: const TextStyle(
-                color: Color(0xFFBFA6D9),
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }
