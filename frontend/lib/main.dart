@@ -7,6 +7,7 @@ import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/profile_page.dart';
 import 'screens/home_screen.dart';
+import 'screens/myplan_screen.dart';
 
 void main() {
   runApp(const KulturnattenApp());
@@ -17,6 +18,7 @@ const String routeMap = '/map';
 const String routeProfile = '/profile';
 const String routeHome = '/home';
 const String routeLogin = '/login';
+const String routePlan = '/plan';
 
 class KulturnattenApp extends StatelessWidget {
   const KulturnattenApp({super.key});
@@ -42,6 +44,7 @@ class KulturnattenApp extends StatelessWidget {
         routeProfile: (_) => const ProfilePage(),
         routeHome: (_) => const HomeScreen(),
         routeLogin: (_) => const LoginScreen(),
+        routePlan: (_) => const MyPlanScreen(),
       },
     );
 

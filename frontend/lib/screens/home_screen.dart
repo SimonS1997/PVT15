@@ -246,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
               break;
 
             case 2:
+              Navigator.pushReplacementNamed(context, '/plan');
               break;
 
             case 3:

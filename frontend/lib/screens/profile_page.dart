@@ -128,7 +128,8 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pushReplacementNamed(context, '/map');
         break;
       case 2:
-        break; // byt till '/plan' när den routen finns
+        Navigator.pushReplacementNamed(context, '/plan');
+        break; 
       case 3:
         break;
     }
