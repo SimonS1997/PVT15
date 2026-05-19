@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
@@ -19,8 +20,60 @@ class EventMapView extends StatefulWidget {
 class _EventMapViewState extends State<EventMapView> {
   static const LatLng stockholm = LatLng(59.3293, 18.0686);
 
+  GoogleMapController? mapController;
+  bool locationEnabled = false;
   EventLocation? selectedEvent;
 
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocation();
+  }
+
+  Future<void> _initializeLocation() async {
+    final serviceEnabled =
+    await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      return;
+    }
+
+    LocationPermission permission =
+    await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      locationEnabled = true;
+    });
+
+    final Position position =
+    await Geolocator.getCurrentPosition();
+    if (!mounted) return;
+
+    final LatLng userLocation = LatLng(
+      position.latitude,
+      position.longitude,
+    );
+
+    mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: userLocation,
+          zoom: 13,
+        ),
+      ),
+    );
+  }
   Set<Marker> get markers {
     return widget.events.map((event) {
       final bool isSelected = selectedEvent?.id == event.id;
@@ -58,20 +111,26 @@ class _EventMapViewState extends State<EventMapView> {
                     target: stockholm,
                     zoom: 12,
                   ),
-                  markers: markers,
+                  onMapCreated: (controller) {
+                    mapController = controller;
+                  },
+                  myLocationEnabled: locationEnabled,
                   myLocationButtonEnabled: false,
+                  markers: markers,
                   zoomControlsEnabled: false,
                   mapToolbarEnabled: false,
                 ),
               ),
             ],
           ),
+
           const Positioned(
             left: 16,
             right: 16,
             bottom: 25,
             child: _FilterBar(),
           ),
+
           if (selectedEvent != null)
             Positioned(
               left: 0,
@@ -137,37 +196,20 @@ class _MapHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 13,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF662080)),
-                  ),
-                  child: const Text(
-                    'Södermalm, Stockholm',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF662080)),
-                ),
-                child: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.near_me_outlined),
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 13,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF662080)),
+            ),
+            child: const Text(
+              'Södermalm, Stockholm',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
