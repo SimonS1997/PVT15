@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
+import '../managers/saved_events_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,6 +51,11 @@ class _LoginScreenState extends State<LoginScreen> {
         username: username,
         password: password,
       );
+      if (!mounted) return;
+
+      // Hämta sparade events direkt vid login
+      await SavedEventsManager.instance.init();
+
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {

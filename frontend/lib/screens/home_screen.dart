@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
+import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
 import '../services/event_api_service.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -286,23 +287,25 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-
-      children: [
-        const Text(
-          "Event",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        for (var event in _events) _EventCard(event: event),
-      ],
+    return ListenableBuilder(
+      listenable: SavedEventsManager.instance,
+      builder: (context, child) {
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          children: [
+            const Text(
+              "Event",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (var event in _events) _EventCard(event: event),
+          ],
+        );
+      },
     );
   }
 }
@@ -370,37 +373,30 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSaved = SavedEventsManager.instance.isSaved(event.id);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-
       padding: const EdgeInsets.all(16),
-
       decoration: BoxDecoration(
         color: const Color(0xFF1D0930),
-
         borderRadius: BorderRadius.circular(12),
-
         border: Border.all(
           color: const Color(0xFF461458),
           width: 2,
         ),
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-
         children: [
-
           // Titel och tid
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
             children: [
               Expanded(
                 child: Text(
                   event.name,
-
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -408,7 +404,15 @@ class _EventCard extends StatelessWidget {
                   ),
                 ),
               ),
-
+              IconButton(
+                onPressed: () {
+                  SavedEventsManager.instance.toggleSave(event.id);
+                },
+                icon: Icon(
+                  isSaved ? Icons.favorite : Icons.favorite_border,
+                  color: const Color(0xFFEC34F8),
+                ),
+              ),
               Text(
                 event.timeStart ?? "",
                 style: const TextStyle(
@@ -418,7 +422,6 @@ class _EventCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 2),
 
           // Plats

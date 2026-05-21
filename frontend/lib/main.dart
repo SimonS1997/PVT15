@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 
 import 'auth_service.dart';
+import 'managers/saved_events_manager.dart';
 import 'screens/auth_gate.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
@@ -108,6 +109,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!mounted) return;
 
     if (session != null) {
+      SavedEventsManager.instance.init();
       Navigator.pushReplacementNamed(context, routeMap);
     } else {
       setState(() => _isBusy = false);
@@ -129,6 +131,7 @@ class _AuthScreenState extends State<AuthScreen> {
       final AuthSession session = await _authService.signIn(config);
       if (!mounted) return;
       setState(() => _session = session);
+      SavedEventsManager.instance.init();
       Navigator.pushReplacementNamed(context, routeMap);
     } on FlutterAppAuthUserCancelledException {
       setState(() => _error = 'Sign-in was cancelled.');

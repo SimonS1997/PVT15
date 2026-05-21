@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
+import '../managers/saved_events_manager.dart';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -22,9 +23,13 @@ class _AuthGateState extends State<AuthGate> {
       await AuthService.instance.loadPersistedSession(config);
     }
     if (!mounted) return;
-    final target =
-        AuthService.instance.session != null ? '/home' : '/login';
-    Navigator.pushReplacementNamed(context, target);
+
+    if (AuthService.instance.session != null) {
+      SavedEventsManager.instance.init();
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   @override
