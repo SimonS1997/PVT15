@@ -6,6 +6,7 @@ class PlanApiService {
   PlanApiService({required this.baseUrl});
 
   final String baseUrl;
+  static const Duration _requestTimeout = Duration(seconds: 8);
 
   Future<Map<String, dynamic>> fetchAll(String accessToken) async {
     final response = await http.get(
@@ -14,9 +15,12 @@ class PlanApiService {
         'Authorization': 'Bearer $accessToken',
         'Accept': 'application/json',
       },
-    );
+    ).timeout(_requestTimeout);
+
     if (response.statusCode != 200) {
-      throw Exception('Kunde inte hämta preferenser (Status: ${response.statusCode})');
+      throw Exception(
+        'Kunde inte hämta preferenser (Status: ${response.statusCode})',
+      );
     }
     if (response.body.isEmpty) return {};
     return jsonDecode(response.body);
@@ -31,9 +35,13 @@ class PlanApiService {
         'Accept': 'application/json',
       },
       body: jsonEncode(value),
-    );
+    ).timeout(_requestTimeout);
+
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Kunde inte spara preferens: $key (Status: ${response.statusCode}, Body: ${response.body})');
+      throw Exception(
+        'Kunde inte spara preferens: $key '
+        '(Status: ${response.statusCode}, Body: ${response.body})',
+      );
     }
   }
 
@@ -41,7 +49,8 @@ class PlanApiService {
     final response = await http.delete(
       Uri.parse('$baseUrl/api/preferences'),
       headers: {'Authorization': 'Bearer $accessToken'},
-    );
+    ).timeout(_requestTimeout);
+
     if (response.statusCode != 200) {
       throw Exception('Kunde inte radera');
     }

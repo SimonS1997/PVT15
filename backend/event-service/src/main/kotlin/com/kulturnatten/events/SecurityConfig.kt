@@ -17,9 +17,9 @@ import org.springframework.security.web.SecurityFilterChain
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    @Value("\${AUTH_ISSUER_URI}")
+    @Value("\${AUTH_ISSUER_URI:http://localhost:8081/realms/kulturnatten-dev}")
     private val issuerUri: String,
-    @Value("\${AUTH_JWK_SET_URI}")
+    @Value("\${AUTH_JWK_SET_URI:http://localhost:8081/realms/kulturnatten-dev/protocol/openid-connect/certs}")
     private val jwkSetUri: String,
 ) {
     @Bean

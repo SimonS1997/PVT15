@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
@@ -53,11 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (!mounted) return;
 
-      // Hämta sparade events direkt vid login
-      await SavedEventsManager.instance.init();
-
-      if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
+      unawaited(SavedEventsManager.instance.init());
     } catch (e) {
       setState(() {
         _loading = false;

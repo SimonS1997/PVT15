@@ -17,9 +17,10 @@ class EventController(
     @GetMapping
     fun getEvents(
         @RequestParam(required = false) category: String?,
-        @RequestParam(required = false) search: String?
+        @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) ids: String?
     ): List<EventResponse> {
-        return eventService.getAllEvents(category, search)
+        return eventService.getEvents(category, search, ids)
     }
 
     @GetMapping("/{id}")

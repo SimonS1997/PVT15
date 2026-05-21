@@ -14,6 +14,19 @@ class EventService(
 
 ) {
 
+    fun getEvents(category: String?, search: String?, ids: String?): List<EventResponse> {
+        if (!ids.isNullOrBlank()) {
+            val eventIds = ids
+                .split(",")
+                .mapNotNull { it.trim().toIntOrNull() }
+                .distinct()
+
+            return getByIds(eventIds)
+        }
+
+        return getAllEvents(category, search)
+    }
+
     fun getAllEvents(category: String?, search: String?): List<EventResponse> {
         val sql = StringBuilder(
             """
@@ -57,6 +70,38 @@ class EventService(
             statement.close()
 
             return events
+        }
+    }
+
+    fun getByIds(ids: List<Int>): List<EventResponse> {
+        if (ids.isEmpty()) return emptyList()
+
+        val placeholders = ids.joinToString(",") { "?" }
+        DriverManager.getConnection(dbUrl).use { connection ->
+            val statement = connection.prepareStatement(
+                """
+                SELECT id, name, venue, address, time_start, time_end, district,
+                       description, booking_required, nearest_station, latitude, longitude, category
+                FROM events
+                WHERE id IN ($placeholders)
+                """.trimIndent()
+            )
+            ids.forEachIndexed { index, id ->
+                statement.setInt(index + 1, id)
+            }
+
+            val resultSet = statement.executeQuery()
+            val eventsById = mutableMapOf<Int, EventResponse>()
+
+            while (resultSet.next()) {
+                val event = mapRow(resultSet)
+                eventsById[event.id] = event
+            }
+
+            resultSet.close()
+            statement.close()
+
+            return ids.mapNotNull { eventsById[it] }
         }
     }
 

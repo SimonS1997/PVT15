@@ -8,15 +8,20 @@ class EventApiService {
   EventApiService({required this.baseUrl});
 
   final String baseUrl;
+  static const Duration _requestTimeout = Duration(seconds: 8);
 
   Future<List<EventLocation>> fetchEvents({
     String? accessToken,
     String? category,
     String? search,
+    List<int>? ids,
   }) async {
     final query = <String, String>{};
     if (category != null && category.isNotEmpty) query['category'] = category;
     if (search != null && search.isNotEmpty) query['search'] = search;
+    if (ids != null && ids.isNotEmpty) {
+      query['ids'] = ids.join(',');
+    }
 
     var uri = Uri.parse('$baseUrl/api/events');
     if (query.isNotEmpty) {
@@ -28,7 +33,7 @@ class EventApiService {
       headers: {
         if (accessToken != null) 'Authorization': 'Bearer $accessToken',
       },
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch events: ${response.statusCode}');
@@ -47,7 +52,7 @@ class EventApiService {
       headers: {
         if (accessToken != null) 'Authorization': 'Bearer $accessToken',
       },
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode == 404) return null;
     if (response.statusCode != 200) {

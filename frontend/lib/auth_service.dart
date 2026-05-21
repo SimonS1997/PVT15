@@ -118,6 +118,7 @@ class AuthService {
   static const String _kIdToken = 'auth_id_token';
   static const String _kRefreshToken = 'auth_refresh_token';
   static const String _kExpiry = 'auth_expiry';
+  static const Duration _requestTimeout = Duration(seconds: 8);
 
   AuthSession? _session;
   AuthConfig? _config;
@@ -186,7 +187,7 @@ class AuthService {
         'password': password,
         'scope': config.scopes.join(' '),
       },
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception('Inloggning misslyckades');

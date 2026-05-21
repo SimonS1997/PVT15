@@ -9,52 +9,58 @@ class SavedEventsManager extends ChangeNotifier {
   SavedEventsManager._();
   static final SavedEventsManager instance = SavedEventsManager._();
 
-  final PlanApiService _planApi = PlanApiService(baseUrl: 'http://10.0.2.2:8084');
-  final EventApiService _eventApi = EventApiService(baseUrl: 'http://10.0.2.2:8082');
+  final PlanApiService _planApi = PlanApiService(
+    baseUrl: 'http://10.0.2.2:8084',
+  );
+  final EventApiService _eventApi = EventApiService(
+    baseUrl: 'http://10.0.2.2:8082',
+  );
 
   List<int> _savedEventIds = [];
-  List<EventLocation> _allEvents = [];
+  List<EventLocation> _savedEventDetails = [];
   bool _isLoading = false;
+  bool _hasInitialized = false;
 
   List<int> get savedEventIds => _savedEventIds;
   bool get isLoading => _isLoading;
 
   List<EventLocation> get savedEvents {
-    return _allEvents.where((e) => _savedEventIds.contains(e.id)).toList();
+    final eventsById = {
+      for (final event in _savedEventDetails) event.id: event,
+    };
+    return [
+      for (final id in _savedEventIds)
+        if (eventsById[id] != null) eventsById[id]!,
+    ];
   }
 
   bool isSaved(int eventId) => _savedEventIds.contains(eventId);
 
-  Future<void> init() async {
-    if (_isLoading) return;
+  Future<void> init({bool forceRefresh = false}) async {
+    if (_isLoading || (_hasInitialized && !forceRefresh)) return;
     _isLoading = true;
     notifyListeners();
 
     try {
       final token = await AuthService.instance.validAccessToken();
       if (token == null) {
-        _isLoading = false;
-        notifyListeners();
+        _hasInitialized = true;
         return;
       }
 
-      // Hämta alla events för att kunna visa detaljer i "Min plan"
-      _allEvents = await _eventApi.fetchEvents(accessToken: token);
-
-      // Hämta sparade IDs från backend
       final prefs = await _planApi.fetchAll(token);
+      _savedEventIds = _parseSavedEventIds(prefs['saved_events']);
 
-      if (prefs.containsKey('saved_events')) {
-        final savedData = prefs['saved_events'];
-        if (savedData is List) {
-          _savedEventIds = savedData.map((e) => e as int).toList();
-        } else if (savedData is String) {
-          final decoded = jsonDecode(savedData) as List<dynamic>;
-          _savedEventIds = decoded.map((e) => e as int).toList();
-        }
-      }
+      _savedEventDetails = _savedEventIds.isEmpty
+          ? []
+          : await _eventApi.fetchEvents(
+              accessToken: token,
+              ids: _savedEventIds,
+            );
+
+      _hasInitialized = true;
     } catch (e) {
-      // Logga fel internt eller via ett dedikerat loggningssystem om tillgängligt
+      // TODO: show a non-blocking sync error in the UI.
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -62,8 +68,10 @@ class SavedEventsManager extends ChangeNotifier {
   }
 
   Future<void> toggleSave(int eventId) async {
-    if (_savedEventIds.contains(eventId)) {
+    final wasSaved = _savedEventIds.contains(eventId);
+    if (wasSaved) {
       _savedEventIds.remove(eventId);
+      _savedEventDetails.removeWhere((event) => event.id == eventId);
     } else {
       _savedEventIds.add(eventId);
     }
@@ -73,15 +81,41 @@ class SavedEventsManager extends ChangeNotifier {
       final token = await AuthService.instance.validAccessToken();
       if (token != null) {
         await _planApi.put(token, 'saved_events', _savedEventIds);
+        if (!wasSaved &&
+            !_savedEventDetails.any((event) => event.id == eventId)) {
+          final event = await _eventApi.fetchById(eventId, accessToken: token);
+          if (event != null) {
+            _savedEventDetails.add(event);
+            notifyListeners();
+          }
+        }
       }
     } catch (e) {
-      // Hantera ev. nätverksfel här
+      // TODO: restore local state if the save request fails.
     }
   }
 
   void clear() {
     _savedEventIds = [];
-    _allEvents = [];
+    _savedEventDetails = [];
+    _hasInitialized = false;
     notifyListeners();
+  }
+
+  List<int> _parseSavedEventIds(dynamic savedData) {
+    final dynamic decoded = savedData is String
+        ? jsonDecode(savedData)
+        : savedData;
+    if (decoded is! List) return [];
+
+    return decoded
+        .map((value) {
+          if (value is int) return value;
+          if (value is num) return value.toInt();
+          if (value is String) return int.tryParse(value);
+          return null;
+        })
+        .whereType<int>()
+        .toList();
   }
 }

@@ -74,6 +74,12 @@ class EventServiceTest {
     }
 
     @Test
+    fun `getEvents hamtar bara angivna ids i samma ordning`() {
+        val events = service.getEvents(null, null, "3,1")
+        assertEquals(listOf(3, 1), events.map { it.id })
+    }
+
+    @Test
     fun `getById ger null nar event saknas`() {
         assertNull(service.getById(999))
     }
