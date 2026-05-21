@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
@@ -9,9 +11,15 @@ class EventMapView extends StatefulWidget {
   const EventMapView({
     super.key,
     required this.events,
+    this.isLoading = false,
+    this.error,
+    this.onRetry,
   });
 
   final List<EventLocation> events;
+  final bool isLoading;
+  final String? error;
+  final VoidCallback? onRetry;
 
   @override
   State<EventMapView> createState() => _EventMapViewState();
@@ -20,27 +28,32 @@ class EventMapView extends StatefulWidget {
 class _EventMapViewState extends State<EventMapView> {
   static const LatLng stockholm = LatLng(59.3293, 18.0686);
 
+  final TextEditingController _searchController = TextEditingController();
   GoogleMapController? mapController;
   bool locationEnabled = false;
+  bool showPlanOnly = false;
+  String searchQuery = '';
+  Set<String> selectedCategories = {};
   EventLocation? selectedEvent;
 
   @override
   void initState() {
     super.initState();
-    _initializeLocation();
+    unawaited(_initializeLocation());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    mapController?.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeLocation() async {
-    final serviceEnabled =
-    await Geolocator.isLocationServiceEnabled();
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
 
-    if (!serviceEnabled) {
-      return;
-    }
-
-    LocationPermission permission =
-    await Geolocator.checkPermission();
-
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
@@ -51,32 +64,83 @@ class _EventMapViewState extends State<EventMapView> {
     }
 
     if (!mounted) return;
-
     setState(() {
       locationEnabled = true;
     });
 
-    final Position position =
-    await Geolocator.getCurrentPosition();
-    if (!mounted) return;
+    final lastKnownPosition = await Geolocator.getLastKnownPosition();
+    if (lastKnownPosition != null) {
+      _moveToPosition(lastKnownPosition, zoom: 13);
+    }
 
-    final LatLng userLocation = LatLng(
-      position.latitude,
-      position.longitude,
-    );
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        timeLimit: const Duration(seconds: 4),
+      );
+      _moveToPosition(position, zoom: 13);
+    } catch (_) {
+      // The map is usable without a fresh GPS fix.
+    }
+  }
 
-
-    mapController?.animateCamera(
+  void _moveToPosition(Position position, {required double zoom}) {
+    if (!mounted || mapController == null) return;
+    mapController!.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
-          target: userLocation,
-          zoom: 13,
+          target: LatLng(position.latitude, position.longitude),
+          zoom: zoom,
         ),
       ),
     );
   }
+
+  Set<int> get _savedEventIds =>
+      SavedEventsManager.instance.savedEventIds.toSet();
+
+  List<String> get availableCategories {
+    final categories = widget.events
+        .map((event) => event.category)
+        .whereType<String>()
+        .where((category) => category.trim().isNotEmpty)
+        .toSet()
+        .toList();
+    categories.sort();
+    return categories;
+  }
+
+  List<EventLocation> get visibleEvents {
+    Iterable<EventLocation> events = widget.events;
+
+    if (showPlanOnly) {
+      final savedIds = _savedEventIds;
+      events = events.where((event) => savedIds.contains(event.id));
+    }
+
+    if (selectedCategories.isNotEmpty) {
+      events = events.where(
+        (event) => selectedCategories.contains(event.category),
+      );
+    }
+
+    return events.toList();
+  }
+
+  List<EventLocation> get searchResults {
+    final query = searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return [];
+
+    return visibleEvents.where((event) {
+      return event.name.toLowerCase().contains(query) ||
+          event.venue.toLowerCase().contains(query) ||
+          event.address.toLowerCase().contains(query) ||
+          (event.category?.toLowerCase().contains(query) ?? false) ||
+          (event.district?.toLowerCase().contains(query) ?? false);
+    }).take(6).toList();
+  }
+
   Set<Marker> get markers {
-    return widget.events.map((event) {
+    return visibleEvents.map((event) {
       final bool isSelected = selectedEvent?.id == event.id;
 
       return Marker(
@@ -90,126 +154,282 @@ class _EventMapViewState extends State<EventMapView> {
         onTap: () {
           setState(() {
             selectedEvent = event;
+            searchQuery = '';
           });
+          _searchController.clear();
         },
       );
     }).toSet();
   }
 
+  void _setPlanFilter(bool value) {
+    setState(() {
+      showPlanOnly = value;
+      _clearSelectedEventIfHidden();
+    });
+  }
+
+  void _setSearchQuery(String value) {
+    setState(() {
+      searchQuery = value;
+    });
+  }
+
+  void _selectSearchResult(EventLocation event) {
+    FocusScope.of(context).unfocus();
+    _searchController.text = event.name;
+    setState(() {
+      searchQuery = '';
+      selectedEvent = event;
+    });
+    mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: event.position, zoom: 15),
+      ),
+    );
+  }
+
+  void _setCategories(Set<String> categories) {
+    setState(() {
+      selectedCategories = categories;
+      _clearSelectedEventIfHidden();
+    });
+  }
+
+  void _clearSelectedEventIfHidden() {
+    if (selectedEvent != null &&
+        !visibleEvents.any((event) => event.id == selectedEvent!.id)) {
+      selectedEvent = null;
+    }
+  }
+
+  Future<void> _openCategoryFilter() async {
+    final result = await showModalBottomSheet<Set<String>>(
+      context: context,
+      backgroundColor: const Color(0xFF1B0030),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return _CategoryFilterSheet(
+          categories: availableCategories,
+          selectedCategories: selectedCategories,
+        );
+      },
+    );
+
+    if (result != null) {
+      _setCategories(result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Stack(
-        children: [
-          Column(
+    return ListenableBuilder(
+      listenable: SavedEventsManager.instance,
+      builder: (context, child) {
+        return SafeArea(
+          child: Stack(
             children: [
-              _MapHeader(
-                onBack: () => Navigator.maybePop(context),
-              ),
-              Expanded(
-                child: GoogleMap(
-                  initialCameraPosition: const CameraPosition(
-                    target: stockholm,
-                    zoom: 12,
+              Column(
+                children: [
+                  _MapHeader(
+                    controller: _searchController,
+                    onChanged: _setSearchQuery,
+                    onFilterTap: _openCategoryFilter,
+                    activeFilterCount: selectedCategories.length,
                   ),
-                  onMapCreated: (controller) {
-                    mapController = controller;
-                  },
-                  myLocationEnabled: locationEnabled,
-                  myLocationButtonEnabled: false,
-                  markers: markers,
-                  zoomControlsEnabled: false,
-                  mapToolbarEnabled: false,
+                  Expanded(
+                    child: GoogleMap(
+                      initialCameraPosition: const CameraPosition(
+                        target: stockholm,
+                        zoom: 12,
+                      ),
+                      onMapCreated: (controller) {
+                        mapController = controller;
+                      },
+                      myLocationEnabled: locationEnabled,
+                      myLocationButtonEnabled: false,
+                      markers: markers,
+                      zoomControlsEnabled: false,
+                      mapToolbarEnabled: false,
+                    ),
+                  ),
+                ],
+              ),
+
+              if (widget.isLoading)
+                const Positioned(
+                  left: 16,
+                  right: 16,
+                  top: 88,
+                  child: _MapStatus(message: 'Hämtar events...'),
+                ),
+
+              if (widget.error != null)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: 88,
+                  child: _MapError(
+                    message: widget.error!,
+                    onRetry: widget.onRetry,
+                  ),
+                ),
+
+              if (searchResults.isNotEmpty)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: 80,
+                  child: _SearchResultsList(
+                    events: searchResults,
+                    onSelect: _selectSearchResult,
+                  ),
+                ),
+
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: selectedEvent == null ? 16 : 220,
+                child: _FilterBar(
+                  showPlanOnly: showPlanOnly,
+                  onShowAll: () => _setPlanFilter(false),
+                  onShowPlan: () => _setPlanFilter(true),
                 ),
               ),
+
+              if (selectedEvent != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _EventInfoCard(
+                    event: selectedEvent!,
+                    onClose: () {
+                      setState(() {
+                        selectedEvent = null;
+                      });
+                    },
+                  ),
+                ),
             ],
           ),
-
-          const Positioned(
-            left: 16,
-            right: 16,
-            bottom: 25,
-            child: _FilterBar(),
-          ),
-
-          if (selectedEvent != null)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _EventInfoCard(
-                event: selectedEvent!,
-                onClose: () {
-                  setState(() {
-                    selectedEvent = null;
-                  });
-                },
-              ),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _MapHeader extends StatelessWidget {
   const _MapHeader({
-    required this.onBack,
+    required this.controller,
+    required this.onChanged,
+    required this.onFilterTap,
+    required this.activeFilterCount,
   });
 
-  final VoidCallback onBack;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onFilterTap;
+  final int activeFilterCount;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFF1B0030),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      child: Row(
         children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_ios_new),
-                color: Colors.white,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Karta',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              style: const TextStyle(color: Colors.white),
+              cursorColor: const Color(0xFFD84DFF),
+              decoration: InputDecoration(
+                hintText: 'Sök event',
+                hintStyle: const TextStyle(color: Color(0xFFD4A4FF)),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Color(0xFFD4A4FF),
+                ),
+                suffixIcon: controller.text.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          controller.clear();
+                          onChanged('');
+                        },
+                        icon: const Icon(Icons.close),
+                        color: const Color(0xFFD4A4FF),
+                      ),
+                filled: true,
+                fillColor: const Color(0xFF26003D),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFF662080)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFF662080)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFD84DFF)),
                 ),
               ),
-              const Spacer(),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B0A57),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            height: 52,
+            width: 52,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: IconButton(
+                    tooltip: 'Filtrera kategori',
+                    onPressed: onFilterTap,
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFF26003D),
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFF662080)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.tune),
                   ),
                 ),
-                onPressed: () {},
-                child: const Text('Filtrera'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 13,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF662080)),
-            ),
-            child: const Text(
-              'Södermalm, Stockholm',
-              style: TextStyle(color: Colors.white),
+                if (activeFilterCount > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFD84DFF),
+                      ),
+                      child: Text(
+                        activeFilterCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -218,16 +438,94 @@ class _MapHeader extends StatelessWidget {
   }
 }
 
+class _SearchResultsList extends StatelessWidget {
+  const _SearchResultsList({
+    required this.events,
+    required this.onSelect,
+  });
+
+  final List<EventLocation> events;
+  final ValueChanged<EventLocation> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xF21B0030),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 280),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF662080)),
+        ),
+        child: ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          itemCount: events.length,
+          separatorBuilder: (context, index) {
+            return const Divider(
+              color: Color(0xFF3B0A57),
+              height: 1,
+            );
+          },
+          itemBuilder: (context, index) {
+            final event = events[index];
+            return ListTile(
+              dense: true,
+              onTap: () => onSelect(event),
+              leading: const Icon(
+                Icons.location_on_outlined,
+                color: Color(0xFFD84DFF),
+              ),
+              title: Text(
+                event.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: Text(
+                event.venue,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Color(0xFFD4A4FF)),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class _FilterBar extends StatelessWidget {
-  const _FilterBar();
+  const _FilterBar({
+    required this.showPlanOnly,
+    required this.onShowAll,
+    required this.onShowPlan,
+  });
+
+  final bool showPlanOnly;
+  final VoidCallback onShowAll;
+  final VoidCallback onShowPlan;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: const [
-        _FilterChip(label: 'Alla', selected: true),
-        SizedBox(width: 8),
-        _FilterChip(label: 'Min plan', selected: false),
+      children: [
+        _FilterChip(
+          label: 'Alla',
+          selected: !showPlanOnly,
+          onTap: onShowAll,
+        ),
+        const SizedBox(width: 8),
+        _FilterChip(
+          label: 'Min plan',
+          selected: showPlanOnly,
+          onTap: onShowPlan,
+        ),
       ],
     );
   }
@@ -237,25 +535,250 @@ class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.label,
     required this.selected,
+    required this.onTap,
   });
 
   final String label;
   final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFD84DFF) : const Color(0xFF1B0030),
+    return Material(
+      color: selected ? const Color(0xFFD84DFF) : const Color(0xFF1B0030),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF662080)),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryFilterSheet extends StatefulWidget {
+  const _CategoryFilterSheet({
+    required this.categories,
+    required this.selectedCategories,
+  });
+
+  final List<String> categories;
+  final Set<String> selectedCategories;
+
+  @override
+  State<_CategoryFilterSheet> createState() => _CategoryFilterSheetState();
+}
+
+class _CategoryFilterSheetState extends State<_CategoryFilterSheet> {
+  late Set<String> selectedCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedCategories = {...widget.selectedCategories};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Filtrera kategori',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      selectedCategories.clear();
+                    });
+                  },
+                  child: const Text('Rensa'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (widget.categories.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  'Inga kategorier hittades.',
+                  style: TextStyle(color: Color(0xFFD4A4FF)),
+                ),
+              )
+            else
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final category in widget.categories)
+                        _CategoryChoice(
+                          label: category,
+                          selected: selectedCategories.contains(category),
+                          onTap: () {
+                            setState(() {
+                              if (selectedCategories.contains(category)) {
+                                selectedCategories.remove(category);
+                              } else {
+                                selectedCategories.add(category);
+                              }
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  Navigator.pop(context, selectedCategories);
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFD84DFF),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('Visa resultat'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryChoice extends StatelessWidget {
+  const _CategoryChoice({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      backgroundColor: const Color(0xFF26003D),
+      selectedColor: const Color(0xFFD84DFF),
+      checkmarkColor: Colors.white,
+      side: const BorderSide(color: Color(0xFF662080)),
+      labelStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+class _MapStatus extends StatelessWidget {
+  const _MapStatus({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xE61B0030),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF662080)),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFFD84DFF),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapError extends StatelessWidget {
+  const _MapError({
+    required this.message,
+    this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xE61B0030),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF662080)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+            if (onRetry != null)
+              TextButton(
+                onPressed: onRetry,
+                child: const Text('Försök igen'),
+              ),
+          ],
         ),
       ),
     );
@@ -291,11 +814,11 @@ class _EventInfoCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const _CategoryBadge(label: 'Event'),
+                  _CategoryBadge(label: event.category ?? 'Event'),
                   const SizedBox(width: 10),
-                  const Text(
-                    '18:00',
-                    style: TextStyle(
+                  Text(
+                    event.timeStart ?? '',
+                    style: const TextStyle(
                       color: Color(0xFFD84DFF),
                       fontWeight: FontWeight.w700,
                     ),

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
+import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
 import '../services/event_api_service.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -14,22 +17,42 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late final Future<List<EventLocation>> eventsFuture;
+  final EventApiService _service = EventApiService(
+    baseUrl: 'http://10.0.2.2:8082',
+  );
+
+  List<EventLocation> _events = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-
-    final service = EventApiService(
-      baseUrl: 'http://10.0.2.2:8082',
-    );
-
-    eventsFuture = _loadEvents(service);
+    unawaited(SavedEventsManager.instance.init());
+    unawaited(_loadEvents());
   }
 
-  Future<List<EventLocation>> _loadEvents(EventApiService service) async {
-    final token = await AuthService.instance.validAccessToken();
-    return service.fetchEvents(accessToken: token);
+  Future<void> _loadEvents() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final token = await AuthService.instance.validAccessToken();
+      final events = await _service.fetchEvents(accessToken: token);
+      if (!mounted) return;
+      setState(() {
+        _events = events;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Kunde inte hämta events: $e';
+      });
+    }
   }
 
   void _onBottomNavTap(int index) {
@@ -52,29 +75,11 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF12001F),
-      body: FutureBuilder<List<EventLocation>>(
-        future: eventsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Kunde inte hämta events:\n${snapshot.error}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white),
-              ),
-            );
-          }
-
-          return EventMapView(
-            events: snapshot.data ?? [],
-          );
-        },
+      body: EventMapView(
+        events: _events,
+        isLoading: _isLoading,
+        error: _error,
+        onRetry: _loadEvents,
       ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: 1,
