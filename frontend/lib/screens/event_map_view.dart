@@ -64,6 +64,7 @@ class _EventMapViewState extends State<EventMapView> {
       position.longitude,
     );
 
+
     mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
