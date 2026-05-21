@@ -33,7 +33,6 @@ class SavedEventsManager extends ChangeNotifier {
     try {
       final token = await AuthService.instance.validAccessToken();
       if (token == null) {
-        debugPrint('SavedEventsManager: No valid token found during init');
         _isLoading = false;
         notifyListeners();
         return;
@@ -41,11 +40,9 @@ class SavedEventsManager extends ChangeNotifier {
 
       // Hämta alla events för att kunna visa detaljer i "Min plan"
       _allEvents = await _eventApi.fetchEvents(accessToken: token);
-      debugPrint('SavedEventsManager: Fetched ${_allEvents.length} events');
 
       // Hämta sparade IDs från backend
       final prefs = await _planApi.fetchAll(token);
-      debugPrint('SavedEventsManager: Fetched preferences: $prefs');
 
       if (prefs.containsKey('saved_events')) {
         final savedData = prefs['saved_events'];
@@ -55,12 +52,9 @@ class SavedEventsManager extends ChangeNotifier {
           final decoded = jsonDecode(savedData) as List<dynamic>;
           _savedEventIds = decoded.map((e) => e as int).toList();
         }
-        debugPrint('SavedEventsManager: Restored saved IDs: $_savedEventIds');
-      } else {
-        debugPrint('SavedEventsManager: No saved_events key found in preferences');
       }
     } catch (e) {
-      debugPrint('Error initializing SavedEventsManager: $e');
+      // Logga fel internt eller via ett dedikerat loggningssystem om tillgängligt
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -78,15 +72,10 @@ class SavedEventsManager extends ChangeNotifier {
     try {
       final token = await AuthService.instance.validAccessToken();
       if (token != null) {
-        debugPrint('SavedEventsManager: Saving updated IDs to backend: $_savedEventIds');
         await _planApi.put(token, 'saved_events', _savedEventIds);
-        debugPrint('SavedEventsManager: Successfully saved to backend');
-      } else {
-        debugPrint('SavedEventsManager: Could not save, no valid token');
       }
     } catch (e) {
-      debugPrint('Error saving preference: $e');
-      // Vid fel kan vi välja att backa ur ändringen eller bara logga den
+      // Hantera ev. nätverksfel här
     }
   }
 
