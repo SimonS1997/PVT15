@@ -135,11 +135,19 @@ class AuthService {
         expiry.isAfter(DateTime.now().add(const Duration(seconds: 30)));
 
     if (stillValid) return s.accessToken;
-    if (s.refreshToken == null) return s.accessToken;
+    if (s.refreshToken == null) {
+      _session = null;
+      await _clearStorage();
+      return null;
+    }
 
     final config = _config ?? await AuthConfig.load();
     final refreshed = await _refresh(config, refreshToken: s.refreshToken!);
-    if (refreshed == null) return s.accessToken;
+    if (refreshed == null) {
+      _session = null;
+      await _clearStorage();
+      return null;
+    }
 
     _session = refreshed;
     return refreshed.accessToken;
@@ -255,22 +263,27 @@ class AuthService {
     required String refreshToken,
   }) async {
     try {
-      final TokenResponse result = await _appAuth.token(
-        TokenRequest(
-          config.clientId,
-          config.redirectUri,
-          issuer: config.issuerUrl,
-          refreshToken: refreshToken,
-          scopes: config.scopes,
-          allowInsecureConnections: true,
-        ),
-      );
+      final response = await http.post(
+        Uri.parse('${config.issuerUrl}/protocol/openid-connect/token'),
+        body: {
+          'client_id': config.clientId,
+          'grant_type': 'refresh_token',
+          'refresh_token': refreshToken,
+          'scope': config.scopes.join(' '),
+        },
+      ).timeout(_requestTimeout);
+
+      if (response.statusCode != 200) return null;
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       final AuthSession refreshed = AuthSession(
-        accessToken: result.accessToken,
-        idToken: result.idToken,
-        refreshToken: result.refreshToken ?? refreshToken,
-        accessTokenExpirationDateTime: result.accessTokenExpirationDateTime,
+        accessToken: data['access_token'] as String?,
+        idToken: data['id_token'] as String?,
+        refreshToken: data['refresh_token'] as String? ?? refreshToken,
+        accessTokenExpirationDateTime: DateTime.now().add(
+          Duration(seconds: data['expires_in'] as int? ?? 0),
+        ),
       );
       await _persist(refreshed);
       return refreshed;
