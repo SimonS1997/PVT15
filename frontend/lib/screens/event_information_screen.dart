@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../models/event_location.dart';
+
 class EventInformationScreen extends StatelessWidget {
   const EventInformationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final event = ModalRoute.of(context)!.settings.arguments as EventLocation;
+    final timeRange = [event.timeStart, event.timeEnd]
+        .where((t) => t != null && t.isNotEmpty)
+        .join(' – ');
+
     return Scaffold(
       backgroundColor: const Color(0xFF21012B),
       body: SafeArea(
@@ -14,302 +21,133 @@ class EventInformationScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.arrow_back_ios_new),
-                      color: Colors.white,
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.favorite_border),
-                      color: Colors.white,
-                    ),
-                  ],
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_ios_new),
+                  color: Colors.white,
                 ),
-
-                const SizedBox(height: 24),
-
+                const SizedBox(height: 16),
                 Container(
-                  height: 220,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4A0755),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: Colors.white,
-                      size: 48,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFF9A00B5),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
-                    'Kategori',
-                    style: TextStyle(
+                  child: Text(
+                    event.category ?? 'Event',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 36),
-
-                const Text(
-                  'Moderna museet:',
-                  style: TextStyle(
+                const SizedBox(height: 24),
+                Text(
+                  event.name,
+                  style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     height: 1.2,
                   ),
                 ),
-
-                const SizedBox(height: 6),
-
-                const Text(
-                  'Midnattsvisning',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
+                const SizedBox(height: 28),
+                if (timeRange.isNotEmpty)
+                  _DetailRow(
+                    icon: Icons.access_time,
+                    title: timeRange,
+                    subtitle: '18 april 2026',
                   ),
+                _DetailRow(
+                  icon: Icons.location_on_outlined,
+                  title: event.venue,
+                  subtitle: event.address,
                 ),
-
-                const SizedBox(height: 28),
-
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.access_time, color: Color(0xFFE02BFF), size: 26),
-                    SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '18.00 - 00.00',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          '18 april 2026',
-                          style: TextStyle(
-                            color: Color(0xFFC7A4D8),
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 28),
-
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      color: Color(0xFFE02BFF),
-                      size: 28,
-                    ),
-                    SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Moderna museet',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Skeppsholmen',
-                          style: TextStyle(
-                            color: Color(0xFFC7A4D8),
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 28),
-
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.groups_2_outlined,
-                      color: Color(0xFFE02BFF),
-                      size: 28,
-                    ),
-                    SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Hög aktivitet',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Baserat på förra året',
-                          style: TextStyle(
-                            color: Color(0xFFC7A4D8),
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 28),
-
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.near_me_outlined,
-                      color: Color(0xFFE02BFF),
-                      size: 28,
-                    ),
-                    SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '12 min från din position',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Gång',
-                          style: TextStyle(
-                            color: Color(0xFFC7A4D8),
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 36),
-
-                const Text(
-                  'Om eventet',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                if (event.nearestStation != null && event.nearestStation!.isNotEmpty)
+                  _DetailRow(
+                    icon: Icons.directions_transit_outlined,
+                    title: 'Närmaste hållplats',
+                    subtitle: event.nearestStation!,
                   ),
-                ),
-
-                const SizedBox(height: 12),
-
-                const Text(
-                  'information',
-                  style: TextStyle(
-                    color: Color(0xFFC7A4D8),
-                    fontSize: 18,
-                    height: 1.4,
+                if (event.bookingRequired)
+                  _DetailRow(
+                    icon: Icons.event_available_outlined,
+                    title: 'Bokning krävs',
+                    subtitle: null,
                   ),
-                ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
+                if (event.description != null && event.description!.isNotEmpty) ...[
+                  const Text(
+                    'Om eventet',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    event.description!,
+                    style: const TextStyle(
+                      color: Color(0xFFC7A4D8),
+                      fontSize: 16,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
 
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton(
-                  onPressed: () {},
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF6A007A),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: const Text(
-                    'Lägg till i min plan',
-                    style: TextStyle(fontSize: 18,
-                        fontWeight: FontWeight.bold
-                    ),
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.icon, required this.title, required this.subtitle});
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 22),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: const Color(0xFFE02BFF), size: 26),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 12),
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C0138),
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(
-                        color: Color(0xFF9A00B5)
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
+                if (subtitle != null && subtitle!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle!,
+                    style: const TextStyle(
+                      color: Color(0xFFC7A4D8),
+                      fontSize: 15,
                     ),
                   ),
-                  child: const Text(
-                    'Visa på karta',
-                    style: TextStyle(fontSize: 17,
-                        fontWeight: FontWeight.w600
-                    ),
-                  ),
-                ),
-              ),
-            ],
+                ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

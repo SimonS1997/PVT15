@@ -7,18 +7,17 @@ import '../managers/saved_events_manager.dart';
 import '../services/plan_api_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-//Färgkonstanter som används på sidan
 const Color kBackground = Color(0xFF120A1E);
 const Color kCardBg = Color(0xFF1E1030);
 const Color kHeaderBg = Color(0xFF120A1E);
 const Color kAccent = Color.fromARGB(255, 158, 88, 183);
 const Color kSubtext = Color(0xFF8B6AAA);
 const Color kBorder = Color(0xFF3A1F5C);
-const Color kDivider = Color(0xFF2E1A50);
 const Color kIconBg = Color(0xFF2A1545);
 const Color kLogoutBg = Color(0xFF1E1030);
 const Color kLogoutBorder = Color(0xFF3A1F5C);
 const Color kLogoutText = Color.fromARGB(255, 158, 88, 183);
+const Color kDanger = Color(0xFFE45A5A);
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -31,37 +30,17 @@ class _ProfilePageState extends State<ProfilePage> {
   final PlanApiService _api =
       PlanApiService(baseUrl: 'http://10.0.2.2:8084');
 
-  Map<String, dynamic>? _preferences;
-  bool _loading = true;
-
   @override
   void initState() {
     super.initState();
-    _init();
+    _ensureSession();
   }
 
-  Future<void> _init() async {
+  Future<void> _ensureSession() async {
+    if (AuthService.instance.session != null) return;
     final config = await AuthConfig.load();
-
-    if (AuthService.instance.session == null) {
-      await AuthService.instance.loadPersistedSession(config);
-    }
-
-    final token = await AuthService.instance.validAccessToken();
-    if (token == null) {
-      setState(() => _loading = false);
-      return;
-    }
-
-    try {
-      final data = await _api.fetchAll(token);
-      setState(() {
-        _preferences = data;
-        _loading = false;
-      });
-    } catch (_) {
-      setState(() => _loading = false);
-    }
+    await AuthService.instance.loadPersistedSession(config);
+    if (mounted) setState(() {});
   }
 
   Future<void> _signOut() async {
@@ -71,18 +50,18 @@ class _ProfilePageState extends State<ProfilePage> {
     Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
   }
 
-  Future<void> _deleteAll() async {
+  Future<void> _deleteAccount() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCardBg,
         title: const Text(
-          'Radera all din data?',
+          'Radera kontot?',
           style: TextStyle(color: Colors.white),
         ),
         content: const Text(
-          'Detta tar bort alla dina sparade preferenser. '
-              'Åtgärden kan inte ångras.',
+          'Detta tar bort ditt konto och all data permanent. '
+          'Åtgärden kan inte ångras.',
           style: TextStyle(color: kSubtext),
         ),
         actions: [
@@ -94,7 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text(
               'Ja, radera',
-              style: TextStyle(color: kAccent),
+              style: TextStyle(color: kDanger),
             ),
           ),
         ],
@@ -107,16 +86,15 @@ class _ProfilePageState extends State<ProfilePage> {
     if (token == null) return;
 
     try {
-      final count = await _api.deleteAll(token);
+      await _api.deleteAccount(token);
+      SavedEventsManager.instance.clear();
+      await AuthService.instance.signOut();
       if (!mounted) return;
-      setState(() => _preferences = {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Raderade $count poster.')),
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kunde inte radera: $e')),
+        SnackBar(content: Text('Kunde inte radera kontot: $e')),
       );
     }
   }
@@ -131,7 +109,7 @@ class _ProfilePageState extends State<ProfilePage> {
         break;
       case 2:
         Navigator.pushReplacementNamed(context, '/plan');
-        break; 
+        break;
       case 3:
         break;
     }
@@ -168,23 +146,19 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final email = _email();
-    final savedCount = _preferences?.length ?? 0;
 
     return Scaffold(
       backgroundColor: kBackground,
       body: SafeArea(
-        child: SingleChildScrollView( //Så att man kan scrolla om innehållet blir för långt
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(email),
-              _buildSectionLabel('SPARADE & PLANERADE'),
-              _buildSavedCard(savedCount),
-            //  _buildSectionLabel('INTRESSEN'),
-           //   _buildInterestsCard(),
               _buildSectionLabel('KONTO'),
               _buildAccountCard(email),
               _buildLogoutButton(),
+              _buildDeleteAccountButton(),
               const SizedBox(height: 28),
             ],
           ),
@@ -197,7 +171,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-//Sidans header med namn, avatar, mejl, redigera profil knapp
   Widget _buildHeader(String? email) {
     return Container(
       color: kHeaderBg,
@@ -205,58 +178,32 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container( //cirkel till avatar med initialer i
-                width: 68,
-                height: 68,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF2D1A4A),
-                  border: Border.all(color: kBorder, width: 2),
-                ),
-                child: Center(
-                  child: Text(
-                    _initials(email),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF2D1A4A),
+              border: Border.all(color: kBorder, width: 2),
+            ),
+            child: Center(
+              child: Text(
+                _initials(email),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const Icon(Icons.settings_outlined, color: Colors.white, size: 26), //kugghjul för inställningar symbol
-            ],
+            ),
           ),
           const SizedBox(height: 14),
-          Text( //användarens namn
+          Text(
             email ?? 'Inloggad användare',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 26,
               fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text( //användarens email
-            email ?? '',
-            style: const TextStyle(color: kSubtext, fontSize: 16),
-          ),
-          const SizedBox(height: 14), //redigera profil knapp
-          OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.edit_outlined, size: 17, color: kAccent), //penna ikon
-            label: const Text(
-              'Redigera profil',
-              style: TextStyle(color: kAccent, fontSize: 15),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: kBorder, width: 1.5),
-              shape: const StadiumBorder(),
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 11),
             ),
           ),
         ],
@@ -278,132 +225,52 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSavedCard(int savedCount) { //sparade evenemang och min plan kort
-    return ListenableBuilder(
-      listenable: SavedEventsManager.instance,
-      builder: (context, child) {
-        final realSavedCount = SavedEventsManager.instance.savedEventIds.length;
-
-        return _buildCard(
-          children: [
-            _buildRow(
-              icon: Icons.favorite_border,
-              title: 'Sparade evenemang',
-              subtitle: _loading ? 'Laddar…' : '$realSavedCount sparade',
-              isLast: false,
-            ),
-            _buildRow(
-              icon: Icons.calendar_today_outlined,
-              title: 'Min plan',
-              subtitle: realSavedCount > 0 ? '$realSavedCount evenemang' : 'Inga evenemang',
-              isLast: true,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildAccountCard(String? email) { //kontoinställningar kort
-    return _buildCard(
-      children: [
-        _buildRow(
-          icon: Icons.person_outline,
-          title: 'Kontouppgifter',
-          subtitle: email ?? 'Inte inloggad',
-          isLast: false,
-        ),
-        _buildRow(
-          icon: Icons.notifications_none,
-          title: 'Aviseringar',
-          subtitle: 'Påminnelser, nyheter',
-          isLast: false,
-        ),
-        _buildRow(
-          icon: Icons.lock_outline,
-          title: 'Sekretess',
-          subtitle: 'Radera min data',
-          isLast: true,
-          onTap: _deleteAll,
-        ),
-      ],
-    );
-  }
-
-//kort som har rundadehörn och fin lila kant, återanvändningsbar
-  Widget _buildCard({required List<Widget> children}) {
+  Widget _buildAccountCard(String? email) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       decoration: BoxDecoration(
         color: kCardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kBorder, width: 1.5),
       ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _buildRow({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isLast,
-    VoidCallback? onTap,
-  }) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            child: Row(
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: kIconBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.person_outline, color: kAccent, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: kIconBg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: kAccent, size: 22),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(color: kSubtext, fontSize: 14),
-                      ),
-                    ],
+                const Text(
+                  'E-post',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFF4A3070),
-                  size: 18,
+                const SizedBox(height: 2),
+                Text(
+                  email ?? 'Inte inloggad',
+                  style: const TextStyle(color: kSubtext, fontSize: 14),
                 ),
               ],
             ),
           ),
-        ),
-        if (!isLast)
-          const Divider(color: kDivider, height: 0.5, thickness: 0.5),
-      ],
+        ],
+      ),
     );
   }
 
-//logga ut knapp längst ned
   Widget _buildLogoutButton() {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 20, 14, 0),
@@ -422,6 +289,33 @@ class _ProfilePageState extends State<ProfilePage> {
         style: OutlinedButton.styleFrom(
           backgroundColor: kLogoutBg,
           side: const BorderSide(color: kLogoutBorder, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 18),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeleteAccountButton() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: _deleteAccount,
+        icon: const Icon(Icons.delete_outline, size: 20, color: kDanger),
+        label: const Text(
+          'Radera konto',
+          style: TextStyle(
+            color: kDanger,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: kLogoutBg,
+          side: const BorderSide(color: kDanger, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

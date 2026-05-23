@@ -73,6 +73,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final planOnly = ModalRoute.of(context)?.settings.arguments == true;
     return Scaffold(
       backgroundColor: const Color(0xFF12001F),
       body: EventMapView(
@@ -80,6 +81,7 @@ class _MapScreenState extends State<MapScreen> {
         isLoading: _isLoading,
         error: _error,
         onRetry: _loadEvents,
+        initialPlanOnly: planOnly,
       ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: 1,

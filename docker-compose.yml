@@ -38,6 +38,7 @@ services:
     environment:
       AUTH_ISSUER_URI: http://localhost:8081/realms/kulturnatten-dev
       AUTH_JWK_SET_URI: http://keycloak:8080/realms/kulturnatten-dev/protocol/openid-connect/certs
+      RESROBOT_API_KEY: ${RESROBOT_API_KEY}
     depends_on:
       - keycloak
     restart: on-failure
@@ -53,6 +54,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:sqlite:/data/plans.db
       AUTH_ISSUER_URI: http://localhost:8081/realms/kulturnatten-dev
       AUTH_JWK_SET_URI: http://keycloak:8080/realms/kulturnatten-dev/protocol/openid-connect/certs
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_REALM: kulturnatten-dev
+      KEYCLOAK_ADMIN_CLIENT_ID: plan-service-admin
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
     volumes:
       - ./data:/data
     depends_on:

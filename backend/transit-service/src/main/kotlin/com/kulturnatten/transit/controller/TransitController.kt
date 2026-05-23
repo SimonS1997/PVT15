@@ -1,5 +1,7 @@
 package com.kulturnatten.transit.controller
 
+import com.kulturnatten.transit.model.LegPlanRequest
+import com.kulturnatten.transit.model.LegPlanResponse
 import com.kulturnatten.transit.model.TransitJourneyResponse
 import com.kulturnatten.transit.model.TransitRequest
 import com.kulturnatten.transit.service.TransitService
@@ -18,5 +20,10 @@ class TransitController(
             origin = request.origin,
             destination = request.destination
         )
+    }
+
+    @PostMapping("/legs")
+    fun planLegs(@RequestBody request: LegPlanRequest): LegPlanResponse {
+        return transitService.planLegs(request.stops)
     }
 }

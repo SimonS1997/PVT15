@@ -14,12 +14,14 @@ class EventMapView extends StatefulWidget {
     this.isLoading = false,
     this.error,
     this.onRetry,
+    this.initialPlanOnly = false,
   });
 
   final List<EventLocation> events;
   final bool isLoading;
   final String? error;
   final VoidCallback? onRetry;
+  final bool initialPlanOnly;
 
   @override
   State<EventMapView> createState() => _EventMapViewState();
@@ -31,7 +33,7 @@ class _EventMapViewState extends State<EventMapView> {
   final TextEditingController _searchController = TextEditingController();
   GoogleMapController? mapController;
   bool locationEnabled = false;
-  bool showPlanOnly = false;
+  late bool showPlanOnly = widget.initialPlanOnly;
   String searchQuery = '';
   Set<String> selectedCategories = {};
   EventLocation? selectedEvent;

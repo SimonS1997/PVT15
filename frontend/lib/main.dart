@@ -6,6 +6,8 @@ import 'managers/saved_events_manager.dart';
 import 'screens/auth_gate.dart';
 import 'screens/login_screen.dart';
 import 'screens/map_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/feasibility_screen.dart';
 import 'screens/profile_page.dart';
 import 'screens/home_screen.dart';
 import 'screens/myplan_screen.dart';
@@ -20,7 +22,9 @@ const String routeMap = '/map';
 const String routeProfile = '/profile';
 const String routeHome = '/home';
 const String routeLogin = '/login';
+const String routeRegister = '/register';
 const String routePlan = '/plan';
+const String routeFeasibility = '/feasibility';
 const String routeEventInformation = '/event-information';
 
 class KulturnattenApp extends StatelessWidget {
@@ -47,7 +51,9 @@ class KulturnattenApp extends StatelessWidget {
         routeProfile: (_) => const ProfilePage(),
         routeHome: (_) => const HomeScreen(),
         routeLogin: (_) => const LoginScreen(),
+        routeRegister: (_) => const RegisterScreen(),
         routePlan: (_) => const MyPlanScreen(),
+        routeFeasibility: (_) => const FeasibilityScreen(),
         routeEventInformation: (_) => const EventInformationScreen(),
       },
     );

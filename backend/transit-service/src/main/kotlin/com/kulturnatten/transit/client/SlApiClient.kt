@@ -12,6 +12,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 
 @Component
 class SlApiClient(
@@ -76,6 +77,43 @@ class SlApiClient(
             destination = destinationName,
             trips = trips
         )
+    }
+
+    fun travelMinutesByCoord(
+        originLat: Double,
+        originLon: Double,
+        originName: String,
+        destLat: Double,
+        destLon: Double,
+        destName: String,
+        departTime: String?,
+    ): Int {
+        val requiredApiKey = requireApiKey()
+        val encName: (String) -> String = { URLEncoder.encode(it, StandardCharsets.UTF_8) }
+        val timeParam = if (!departTime.isNullOrBlank()) "&time=$departTime" else ""
+
+        val url = "https://api.resrobot.se/v2.1/trip" +
+                "?format=json" +
+                "&originCoordLat=$originLat&originCoordLong=$originLon&originCoordName=${encName(originName)}" +
+                "&destCoordLat=$destLat&destCoordLong=$destLon&destCoordName=${encName(destName)}" +
+                timeParam +
+                "&numF=1" +
+                "&accessId=$requiredApiKey"
+
+        val request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build()
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
+
+        if (response.statusCode() != 200) {
+            error("ResRobot trip-anrop misslyckades. Statuskod: ${response.statusCode()}")
+        }
+
+        val tripNode = objectMapper.readTree(response.body()).get("Trip")?.firstOrNull()
+            ?: error("Ingen resa hittades mellan $originName och $destName")
+
+        val durationText = tripNode.get("duration")?.asText()
+            ?: error("Resan saknar varaktighet")
+
+        return Duration.parse(durationText).toMinutes().toInt()
     }
 
     private fun findStopExtId(stopName: String): String {

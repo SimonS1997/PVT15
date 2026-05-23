@@ -94,7 +94,14 @@ class MyPlanScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final events = SavedEventsManager.instance.savedEvents;
+                    Navigator.pushNamed(
+                      context,
+                      '/feasibility',
+                      arguments: events,
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFEC34F8),
                     padding: const EdgeInsets.all(14),
@@ -103,7 +110,7 @@ class MyPlanScreen extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    "Optimera min plan",
+                    "Hinner jag?",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -250,7 +257,11 @@ class _PlanEventCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-                    // TODO: Gå till karta och centrera på event
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/map',
+                      arguments: true,
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(
@@ -273,7 +284,13 @@ class _PlanEventCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/event-information',
+                      arguments: event,
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(
                       color: Color(0xFF861C91),

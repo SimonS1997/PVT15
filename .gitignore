@@ -1,4 +1,5 @@
 # Env files (per-machine secrets)
+.env
 **/.env.local
 **/.env.*.local
 

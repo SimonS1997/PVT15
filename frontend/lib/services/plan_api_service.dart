@@ -56,4 +56,40 @@ class PlanApiService {
     }
     return jsonDecode(response.body)['deleted'] ?? 0;
   }
+
+  Future<void> register({
+    required String email,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/account/register'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'email': email, 'password': password}),
+    ).timeout(_requestTimeout);
+
+    if (response.statusCode == 201) return;
+
+    if (response.statusCode == 409) {
+      throw Exception('E-postadressen är redan registrerad.');
+    }
+    throw Exception(
+      'Kunde inte skapa konto (Status: ${response.statusCode})',
+    );
+  }
+
+  Future<void> deleteAccount(String accessToken) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/account'),
+      headers: {'Authorization': 'Bearer $accessToken'},
+    ).timeout(_requestTimeout);
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception(
+        'Kunde inte radera kontot (Status: ${response.statusCode})',
+      );
+    }
+  }
 }

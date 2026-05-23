@@ -4,33 +4,36 @@ import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
 import '../managers/saved_events_manager.dart';
+import '../services/plan_api_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _username = TextEditingController();
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  final PlanApiService _api =
+      PlanApiService(baseUrl: 'http://10.0.2.2:8084');
 
   bool _loading = false;
   String? _error;
 
   @override
   void dispose() {
-    _username.dispose();
+    _email.dispose();
     _password.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
-    final username = _username.text.trim();
+  Future<void> _register() async {
+    final email = _email.text.trim();
     final password = _password.text;
-    if (username.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Fyll i användarnamn och lösenord.');
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _error = 'Fyll i e-post och lösenord.');
       return;
     }
 
@@ -48,19 +51,22 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         return;
       }
+
+      await _api.register(email: email, password: password);
+
       await AuthService.instance.signInWithPassword(
         config,
-        username: username,
+        username: email,
         password: password,
       );
-      if (!mounted) return;
 
-      Navigator.pushReplacementNamed(context, '/home');
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
       unawaited(SavedEventsManager.instance.init());
     } catch (e) {
       setState(() {
         _loading = false;
-        _error = 'Fel användarnamn eller lösenord.';
+        _error = e.toString().replaceFirst('Exception: ', '');
       });
     }
   }
@@ -72,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Logga in'),
+        title: const Text('Skapa konto'),
       ),
       body: SafeArea(
         child: Padding(
@@ -82,13 +88,13 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
               const Center(
                 child: Icon(
-                  Icons.lock_outline,
+                  Icons.person_add_alt_1_outlined,
                   size: 64,
                   color: Color(0xFFEC34F8),
                 ),
               ),
               const SizedBox(height: 32),
-              _field(_username, 'Användarnamn', false),
+              _field(_email, 'E-post', false),
               const SizedBox(height: 12),
               _field(_password, 'Lösenord', true),
               const SizedBox(height: 16),
@@ -100,37 +106,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 12),
               ],
               FilledButton(
-                onPressed: _loading ? null : _login,
+                onPressed: _loading ? null : _register,
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFEC34F8),
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: _loading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 2,
-                        ),
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Konto skapas…'),
+                        ],
                       )
-                    : const Text('Logga in'),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: _loading
-                      ? null
-                      : () => Navigator.pushNamed(context, '/register'),
-                  child: const Text(
-                    'Skapa konto',
-                    style: TextStyle(
-                      color: Color(0xFFAE8ACF),
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
+                    : const Text('Skapa konto'),
               ),
             ],
           ),
