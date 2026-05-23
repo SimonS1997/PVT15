@@ -436,27 +436,50 @@ class _EventCard extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          // Kategori
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
-
-            decoration: BoxDecoration(
-              color: const Color(0xFF320E45),
-              borderRadius: BorderRadius.circular(15),
-            ),
-
-            child: Text(
-              event.category ?? "Övrigt",
-
-              style: const TextStyle(
-                color: Color(0xFFAE8ACF),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+          Row(
+            children: [
+              // Kategori
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF320E45),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  event.category ?? "Övrigt",
+                  style: const TextStyle(
+                    color: Color(0xFFAE8ACF),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
+              const Spacer(),
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/event-information',
+                    arguments: event,
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF861C91)),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Detaljer",
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -79,7 +79,7 @@ class SlApiClient(
         )
     }
 
-    fun travelMinutesByCoord(
+    fun planTripByCoord(
         originLat: Double,
         originLon: Double,
         originName: String,
@@ -87,7 +87,7 @@ class SlApiClient(
         destLon: Double,
         destName: String,
         departTime: String?,
-    ): Int {
+    ): TripPlan {
         val requiredApiKey = requireApiKey()
         val encName: (String) -> String = { URLEncoder.encode(it, StandardCharsets.UTF_8) }
         val timeParam = if (!departTime.isNullOrBlank()) "&time=$departTime" else ""
@@ -112,9 +112,60 @@ class SlApiClient(
 
         val durationText = tripNode.get("duration")?.asText()
             ?: error("Resan saknar varaktighet")
+        val minutes = Duration.parse(durationText).toMinutes().toInt()
 
-        return Duration.parse(durationText).toMinutes().toInt()
+        val legListNode = tripNode.get("LegList")?.get("Leg")
+        val legNodes: List<JsonNode> = when {
+            legListNode == null -> emptyList()
+            legListNode.isArray -> legListNode.toList()
+            else -> listOf(legListNode)
+        }
+        val segments = legNodes.mapIndexed { i, node ->
+            val seg = mapSegment(node)
+            seg.copy(
+                fromName = if (i == 0) originName else seg.fromName,
+                toName = if (i == legNodes.size - 1) destName else seg.toName,
+            )
+        }
+
+        return TripPlan(travelMinutes = minutes, segments = segments)
     }
+
+    private fun mapSegment(leg: JsonNode): SegmentInfo {
+        val origin = leg.get("Origin")
+        val destination = leg.get("Destination")
+        val fromName = origin?.get("name")?.asText() ?: "okänd"
+        val toName = destination?.get("name")?.asText() ?: "okänd"
+
+        val depart = origin?.get("time")?.asText()
+        val arrive = destination?.get("time")?.asText()
+        val duration = if (depart != null && arrive != null) minutesBetween(depart, arrive) else null
+
+        val type = leg.get("type")?.asText() ?: "WALK"
+        val line = leg.get("Product")?.get("num")?.asText()
+            ?: leg.get("name")?.asText()
+        val direction = leg.get("direction")?.asText()
+
+        return SegmentInfo(type, line, direction, fromName, toName, duration)
+    }
+
+    private fun minutesBetween(a: String, b: String): Int {
+        val pa = a.split(":")
+        val pb = b.split(":")
+        val ma = pa[0].toInt() * 60 + pa[1].toInt()
+        val mb = pb[0].toInt() * 60 + pb[1].toInt()
+        return ((mb - ma) + 24 * 60) % (24 * 60)
+    }
+
+    data class TripPlan(val travelMinutes: Int, val segments: List<SegmentInfo>)
+    data class SegmentInfo(
+        val type: String,
+        val line: String?,
+        val direction: String?,
+        val fromName: String,
+        val toName: String,
+        val durationMinutes: Int?,
+    )
 
     private fun findStopExtId(stopName: String): String {
         val requiredApiKey = requireApiKey()

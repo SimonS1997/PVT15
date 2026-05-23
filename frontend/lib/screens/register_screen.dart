@@ -110,6 +110,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFEC34F8),
                   foregroundColor: Colors.black,
+                  disabledBackgroundColor: const Color(0xFFEC34F8),
+                  disabledForegroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: _loading

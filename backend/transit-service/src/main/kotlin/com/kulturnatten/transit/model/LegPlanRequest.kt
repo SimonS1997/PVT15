@@ -18,5 +18,15 @@ data class LegPlanResponse(
 data class LegPlanLeg(
     val from: String,
     val to: String,
-    val travelMinutes: Int
+    val travelMinutes: Int,
+    val segments: List<LegSegment>,
+)
+
+data class LegSegment(
+    val type: String,
+    val line: String?,
+    val direction: String?,
+    val fromName: String,
+    val toName: String,
+    val durationMinutes: Int?,
 )
