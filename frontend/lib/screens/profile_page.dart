@@ -128,9 +128,12 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pushReplacementNamed(context, '/map');
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/plan');
-        break; 
+        Navigator.pushReplacementNamed(context, '/nearby');
+        break;
       case 3:
+        Navigator.pushReplacementNamed(context, '/plan');
+        break;
+      case 4:
         break;
     }
   }
@@ -189,7 +192,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        currentIndex: 3,
+        currentIndex: 4,
         onTap: _onBottomNavTap,
       ),
     );

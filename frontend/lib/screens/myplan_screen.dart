@@ -149,7 +149,7 @@ class MyPlanScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        currentIndex: 2,
+        currentIndex: 3,
         onTap: (index) {
           switch (index) {
             case 0:
@@ -159,8 +159,11 @@ class MyPlanScreen extends StatelessWidget {
             Navigator.pushReplacementNamed(context, '/map');
             break;
             case 2:
+            Navigator.pushReplacementNamed(context, '/nearby');
             break;
             case 3:
+            break;
+            case 4:
             Navigator.pushReplacementNamed(context, '/profile');
             break;
           }
