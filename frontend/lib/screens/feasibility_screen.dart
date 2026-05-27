@@ -43,7 +43,6 @@ class _FeasibilityScreenState extends State<FeasibilityScreen> {
     }
     try {
       final token = await AuthService.instance.validAccessToken();
-      if (token == null) throw Exception('Du behöver vara inloggad.');
 
       final stops = _events
           .map((e) => {

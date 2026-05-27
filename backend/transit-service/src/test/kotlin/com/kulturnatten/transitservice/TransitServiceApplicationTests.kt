@@ -1,4 +1,4 @@
-package com.kulturnatten.transitservice
+package com.kulturnatten.transit
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest

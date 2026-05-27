@@ -62,12 +62,12 @@ class TransitApiService {
 
   Future<List<LegPlanLeg>> planLegs({
     required List<Map<String, dynamic>> stops,
-    required String accessToken,
+    String? accessToken,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/transit/legs'),
       headers: {
-        'Authorization': 'Bearer $accessToken',
+        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
       },
       body: jsonEncode({'stops': stops}),
@@ -75,7 +75,8 @@ class TransitApiService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Kunde inte hämta restider (Status: ${response.statusCode})',
+        'Kunde inte hämta restider '
+        '(Status: ${response.statusCode}, Body: ${response.body})',
       );
     }
 
