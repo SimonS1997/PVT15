@@ -17,6 +17,21 @@ class _HomeScreenState extends State<HomeScreen> {
   final EventApiService _api =
       EventApiService(baseUrl: 'http://10.0.2.2:8082');
 
+  static const List<String> _categoryLabels = [
+    "Alla",
+    "Musik",
+    "Konst",
+    "Teater",
+    "Film",
+    "Dans",
+    "Guidad tur",
+    "Historia",
+    "Litteratur",
+    "Wellness",
+    "Workshop",
+    "Övrigt",
+  ];
+
   List<EventLocation> _events = [];
   bool _loading = true;
   String? _error;
@@ -43,6 +58,18 @@ class _HomeScreenState extends State<HomeScreen> {
         return "FILM";
       case "Dans":
         return "DANCE";
+      case "Guidad tur":
+        return "GUIDED_TOUR";
+      case "Historia":
+        return "HISTORY";
+      case "Litteratur":
+        return "LITERATURE";
+      case "Wellness":
+        return "WELLNESS";
+      case "Workshop":
+        return "WORKSHOP";
+      case "Övrigt":
+        return "OTHER";
       default:
         return null;
     }
@@ -218,38 +245,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(right: 16),
-
                   children: [
-                    _FilterBubbla(
-                      label: "Alla",
-                      selected: _selectedLabel == "Alla",
-                      onTap: () => _onCategoryTap("Alla"),
-                    ),
-                    _FilterBubbla(
-                      label: "Musik",
-                      selected: _selectedLabel == "Musik",
-                      onTap: () => _onCategoryTap("Musik"),
-                    ),
-                    _FilterBubbla(
-                      label: "Konst",
-                      selected: _selectedLabel == "Konst",
-                      onTap: () => _onCategoryTap("Konst"),
-                    ),
-                    _FilterBubbla(
-                      label: "Teater",
-                      selected: _selectedLabel == "Teater",
-                      onTap: () => _onCategoryTap("Teater"),
-                    ),
-                    _FilterBubbla(
-                      label: "Film",
-                      selected: _selectedLabel == "Film",
-                      onTap: () => _onCategoryTap("Film"),
-                    ),
-                    _FilterBubbla(
-                      label: "Dans",
-                      selected: _selectedLabel == "Dans",
-                      onTap: () => _onCategoryTap("Dans"),
-                    ),
+                    for (final label in _categoryLabels)
+                      _FilterBubbla(
+                        label: label,
+                        selected: _selectedLabel == label,
+                        onTap: () => _onCategoryTap(label),
+                      ),
                   ],
                 ),
               ),

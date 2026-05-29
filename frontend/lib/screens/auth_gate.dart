@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../auth_service.dart';
@@ -18,14 +20,21 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _decide() async {
-    final config = await AuthConfig.load();
-    if (config.isConfigured) {
-      await AuthService.instance.loadPersistedSession(config);
+    try {
+      final config = await AuthConfig.load();
+      if (config.isConfigured) {
+        await AuthService.instance
+            .loadPersistedSession(config)
+            .timeout(const Duration(seconds: 10));
+      }
+    } catch (_) {
+      await AuthService.instance.signOut();
     }
+
     if (!mounted) return;
 
     if (AuthService.instance.session != null) {
-      SavedEventsManager.instance.init();
+      unawaited(SavedEventsManager.instance.init());
       Navigator.pushReplacementNamed(context, '/home');
     } else {
       Navigator.pushReplacementNamed(context, '/login');

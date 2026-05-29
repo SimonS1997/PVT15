@@ -29,6 +29,19 @@ class EventMapView extends StatefulWidget {
 
 class _EventMapViewState extends State<EventMapView> {
   static const LatLng stockholm = LatLng(59.3293, 18.0686);
+  static const Map<String, String> categoryLabels = {
+    'MUSIC': 'Musik',
+    'ART': 'Konst',
+    'THEATRE': 'Teater',
+    'FILM': 'Film',
+    'DANCE': 'Dans',
+    'GUIDED_TOUR': 'Guidad tur',
+    'HISTORY': 'Historia',
+    'LITERATURE': 'Litteratur',
+    'WELLNESS': 'Wellness',
+    'WORKSHOP': 'Workshop',
+    'OTHER': 'Övrigt',
+  };
 
   final TextEditingController _searchController = TextEditingController();
   GoogleMapController? mapController;
@@ -107,8 +120,14 @@ class _EventMapViewState extends State<EventMapView> {
         .where((category) => category.trim().isNotEmpty)
         .toSet()
         .toList();
-    categories.sort();
+    categories.sort(
+      (a, b) => _categoryLabel(a).compareTo(_categoryLabel(b)),
+    );
     return categories;
+  }
+
+  static String _categoryLabel(String category) {
+    return categoryLabels[category] ?? category;
   }
 
   List<EventLocation> get visibleEvents {
@@ -137,6 +156,8 @@ class _EventMapViewState extends State<EventMapView> {
           event.venue.toLowerCase().contains(query) ||
           event.address.toLowerCase().contains(query) ||
           (event.category?.toLowerCase().contains(query) ?? false) ||
+          (event.category != null &&
+              _categoryLabel(event.category!).toLowerCase().contains(query)) ||
           (event.district?.toLowerCase().contains(query) ?? false);
     }).take(6).toList();
   }
@@ -216,6 +237,7 @@ class _EventMapViewState extends State<EventMapView> {
         return _CategoryFilterSheet(
           categories: availableCategories,
           selectedCategories: selectedCategories,
+          categoryLabel: _categoryLabel,
         );
       },
     );
@@ -575,10 +597,12 @@ class _CategoryFilterSheet extends StatefulWidget {
   const _CategoryFilterSheet({
     required this.categories,
     required this.selectedCategories,
+    required this.categoryLabel,
   });
 
   final List<String> categories;
   final Set<String> selectedCategories;
+  final String Function(String category) categoryLabel;
 
   @override
   State<_CategoryFilterSheet> createState() => _CategoryFilterSheetState();
@@ -641,7 +665,7 @@ class _CategoryFilterSheetState extends State<_CategoryFilterSheet> {
                     children: [
                       for (final category in widget.categories)
                         _CategoryChoice(
-                          label: category,
+                          label: widget.categoryLabel(category),
                           selected: selectedCategories.contains(category),
                           onTap: () {
                             setState(() {
