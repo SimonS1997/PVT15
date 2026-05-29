@@ -15,6 +15,7 @@ class EventMapView extends StatefulWidget {
     this.error,
     this.onRetry,
     this.initialPlanOnly = false,
+    this.initialSelectedEvent,
   });
 
   final List<EventLocation> events;
@@ -22,6 +23,7 @@ class EventMapView extends StatefulWidget {
   final String? error;
   final VoidCallback? onRetry;
   final bool initialPlanOnly;
+  final EventLocation? initialSelectedEvent;
 
   @override
   State<EventMapView> createState() => _EventMapViewState();
@@ -50,6 +52,7 @@ class _EventMapViewState extends State<EventMapView> {
   String searchQuery = '';
   Set<String> selectedCategories = {};
   EventLocation? selectedEvent;
+  bool _didFocusInitialEvent = false;
 
   @override
   void initState() {
@@ -82,6 +85,8 @@ class _EventMapViewState extends State<EventMapView> {
     setState(() {
       locationEnabled = true;
     });
+
+    if (widget.initialSelectedEvent != null) return;
 
     final lastKnownPosition = await Geolocator.getLastKnownPosition();
     if (lastKnownPosition != null) {
@@ -124,6 +129,34 @@ class _EventMapViewState extends State<EventMapView> {
       (a, b) => _categoryLabel(a).compareTo(_categoryLabel(b)),
     );
     return categories;
+  }
+
+  @override
+  void didUpdateWidget(covariant EventMapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _focusInitialEventIfReady();
+  }
+
+  void _focusInitialEventIfReady() {
+    if (_didFocusInitialEvent || mapController == null) return;
+    final initialEvent = widget.initialSelectedEvent;
+    if (initialEvent == null) return;
+
+    final event = widget.events.firstWhere(
+      (event) => event.id == initialEvent.id,
+      orElse: () => initialEvent,
+    );
+
+    _didFocusInitialEvent = true;
+    setState(() {
+      selectedEvent = event;
+      showPlanOnly = false;
+    });
+    mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: event.position, zoom: 15),
+      ),
+    );
   }
 
   static String _categoryLabel(String category) {
@@ -271,6 +304,7 @@ class _EventMapViewState extends State<EventMapView> {
                       ),
                       onMapCreated: (controller) {
                         mapController = controller;
+                        _focusInitialEventIfReady();
                       },
                       myLocationEnabled: locationEnabled,
                       myLocationButtonEnabled: false,

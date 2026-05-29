@@ -561,7 +561,8 @@ class _EventCard extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Kategori
               Container(
@@ -582,27 +583,57 @@ class _EventCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/event-information',
-                    arguments: event,
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF861C91)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/map',
+                          arguments: event,
+                        );
+                      },
+                      icon: const Icon(Icons.location_on_outlined, size: 18),
+                      label: const Text(
+                        "Visa på kartan",
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF861C91)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  "Detaljer",
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/event-information',
+                          arguments: event,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF861C91)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        "Detaljer",
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
