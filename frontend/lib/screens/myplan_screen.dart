@@ -7,6 +7,41 @@ import '../widgets/bottom_nav_bar.dart';
 class MyPlanScreen extends StatelessWidget {
   const MyPlanScreen({super.key});
 
+  void _showPlanInfo(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1D0930),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF461458)),
+          ),
+          title: const Text(
+            "Din plan",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            "Här ser du dina sparade event inför kulturnatten.",
+            style: TextStyle(color: Color(0xFFAE8ACF)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "Stäng",
+                style: TextStyle(color: Color(0xFFEC34F8)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,44 +52,27 @@ class MyPlanScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Min plan",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1D0930),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF461458)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      "Din plan",
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      "Min plan",
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 6),
-                    Text(
-                      "Här ser du dina sparade event inför kulturnatten.",
-                      style: TextStyle(
-                        color: Color(0xFFAE8ACF),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    tooltip: 'Om din plan',
+                    onPressed: () => _showPlanInfo(context),
+                    icon: const Icon(Icons.help_outline),
+                    color: const Color(0xFFAE8ACF),
+                  ),
+                ],
               ),
+              const SizedBox(height: 8),
 
               //Valda events
               Expanded(
