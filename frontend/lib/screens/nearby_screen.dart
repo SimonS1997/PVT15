@@ -289,46 +289,75 @@ class _NearbyEventCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF320E45),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Text(
+                localizedCategoryLabel(event.category, fallback: 'Övrigt'),
+                style: const TextStyle(
+                  color: Color(0xFFAE8ACF),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF320E45),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Text(
-                  localizedCategoryLabel(event.category, fallback: 'Övrigt'),
-                  style: const TextStyle(
-                    color: Color(0xFFAE8ACF),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/map',
+                      arguments: event,
+                    );
+                  },
+                  icon: const Icon(Icons.location_on_outlined, size: 18),
+                  label: const Text(
+                    'Visa på kartan',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF861C91)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/event-information',
-                    arguments: event,
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF861C91)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/event-information',
+                      arguments: event,
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF861C91)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  'Detaljer',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  child: const Text(
+                    'Detaljer',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
                 ),
               ),
             ],
