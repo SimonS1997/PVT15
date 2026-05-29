@@ -31,6 +31,9 @@ class EventMapView extends StatefulWidget {
 
 class _EventMapViewState extends State<EventMapView> {
   static const LatLng stockholm = LatLng(59.3293, 18.0686);
+  static const double _mapControlBottom = 16;
+  static const double _selectedEventControlBottom = 232;
+  static const bool _hideMapControlsWhenEventSelected = true;
   static const Map<String, String> categoryLabels = {
     'MUSIC': 'Musik',
     'ART': 'Konst',
@@ -113,6 +116,41 @@ class _EventMapViewState extends State<EventMapView> {
         ),
       ),
     );
+  }
+
+  Future<void> _focusOnUserLocation() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    if (mounted && !locationEnabled) {
+      setState(() {
+        locationEnabled = true;
+      });
+    }
+
+    final lastKnownPosition = await Geolocator.getLastKnownPosition();
+    if (lastKnownPosition != null) {
+      _moveToPosition(lastKnownPosition, zoom: 15);
+    }
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        timeLimit: const Duration(seconds: 4),
+      );
+      _moveToPosition(position, zoom: 15);
+    } catch (_) {
+      // Last known position is good enough if a fresh GPS fix times out.
+    }
   }
 
   Set<int> get _savedEventIds =>
@@ -346,16 +384,41 @@ class _EventMapViewState extends State<EventMapView> {
                   ),
                 ),
 
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: selectedEvent == null ? 16 : 220,
-                child: _FilterBar(
-                  showPlanOnly: showPlanOnly,
-                  onShowAll: () => _setPlanFilter(false),
-                  onShowPlan: () => _setPlanFilter(true),
+              if (selectedEvent == null ||
+                  !_hideMapControlsWhenEventSelected)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: selectedEvent == null
+                      ? _mapControlBottom
+                      : _selectedEventControlBottom,
+                  child: _FilterBar(
+                    showPlanOnly: showPlanOnly,
+                    onShowAll: () => _setPlanFilter(false),
+                    onShowPlan: () => _setPlanFilter(true),
+                  ),
                 ),
-              ),
+
+              if (selectedEvent == null ||
+                  !_hideMapControlsWhenEventSelected)
+                Positioned(
+                  right: 16,
+                  bottom: selectedEvent == null
+                      ? _mapControlBottom
+                      : _selectedEventControlBottom,
+                  child: FloatingActionButton.small(
+                    heroTag: 'focusUserLocation',
+                    tooltip: 'Fokusera på min plats',
+                    onPressed: _focusOnUserLocation,
+                    backgroundColor: const Color(0xFF26003D),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      side: const BorderSide(color: Color(0xFF662080)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.my_location),
+                  ),
+                ),
 
               if (selectedEvent != null)
                 Positioned(
