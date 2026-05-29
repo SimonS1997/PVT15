@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../auth_service.dart';
+import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
 import '../services/event_api_service.dart';
 import '../utils/category_labels.dart';
@@ -231,18 +232,23 @@ class _NearbyEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D0930),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF461458),
-          width: 2,
-        ),
-      ),
-      child: Column(
+    return ListenableBuilder(
+      listenable: SavedEventsManager.instance,
+      builder: (context, child) {
+        final isSaved = SavedEventsManager.instance.isSaved(event.id);
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1D0930),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF461458),
+              width: 2,
+            ),
+          ),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -259,13 +265,28 @@ class _NearbyEventCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                event.timeStart ?? '',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFFEC34F8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    event.timeStart ?? '',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFFEC34F8),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: isSaved ? 'Ta bort från min plan' : 'Lägg till i min plan',
+                    onPressed: () {
+                      SavedEventsManager.instance.toggleSave(event.id);
+                    },
+                    icon: Icon(
+                      isSaved ? Icons.favorite : Icons.favorite_border,
+                      color: const Color(0xFFEC34F8),
+                    ),
+                  ),
+                ],
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 4),
@@ -363,7 +384,9 @@ class _NearbyEventCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
+          ),
+        );
+      },
     );
   }
 }
