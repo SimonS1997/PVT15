@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/event_location.dart';
+import '../utils/category_labels.dart';
 
 class EventInformationScreen extends StatelessWidget {
   const EventInformationScreen({super.key});
@@ -34,7 +35,7 @@ class EventInformationScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    event.category ?? 'Event',
+                    localizedCategoryLabel(event.category),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,

@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
+import '../utils/category_labels.dart';
 
 class EventMapView extends StatefulWidget {
   const EventMapView({
@@ -34,19 +35,6 @@ class _EventMapViewState extends State<EventMapView> {
   static const double _mapControlBottom = 16;
   static const double _selectedEventControlBottom = 232;
   static const bool _hideMapControlsWhenEventSelected = true;
-  static const Map<String, String> categoryLabels = {
-    'MUSIC': 'Musik',
-    'ART': 'Konst',
-    'THEATRE': 'Teater',
-    'FILM': 'Film',
-    'DANCE': 'Dans',
-    'GUIDED_TOUR': 'Guidad tur',
-    'HISTORY': 'Historia',
-    'LITERATURE': 'Litteratur',
-    'WELLNESS': 'Wellness',
-    'WORKSHOP': 'Workshop',
-    'OTHER': 'Övrigt',
-  };
 
   final TextEditingController _searchController = TextEditingController();
   GoogleMapController? mapController;
@@ -198,7 +186,7 @@ class _EventMapViewState extends State<EventMapView> {
   }
 
   static String _categoryLabel(String category) {
-    return categoryLabels[category] ?? category;
+    return localizedCategoryLabel(category, fallback: category);
   }
 
   List<EventLocation> get visibleEvents {
@@ -937,7 +925,7 @@ class _EventInfoCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _CategoryBadge(label: event.category ?? 'Event'),
+                  _CategoryBadge(label: localizedCategoryLabel(event.category)),
                   const SizedBox(width: 10),
                   Text(
                     event.timeStart ?? '',

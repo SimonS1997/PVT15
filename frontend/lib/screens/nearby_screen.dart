@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../auth_service.dart';
 import '../models/event_location.dart';
 import '../services/event_api_service.dart';
+import '../utils/category_labels.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 class NearbyScreen extends StatefulWidget {
@@ -300,7 +301,7 @@ class _NearbyEventCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
-                  event.category ?? 'Övrigt',
+                  localizedCategoryLabel(event.category, fallback: 'Övrigt'),
                   style: const TextStyle(
                     color: Color(0xFFAE8ACF),
                     fontSize: 12,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../managers/saved_events_manager.dart';
 import '../models/event_location.dart';
+import '../utils/category_labels.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 class MyPlanScreen extends StatelessWidget {
@@ -221,7 +222,7 @@ class _PlanEventCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(15),
             ),
             child: Text(
-              event.category ?? "Event",
+              localizedCategoryLabel(event.category),
               style: const TextStyle(
                 color: Color(0xFFAE8ACF),
                 fontSize: 12,
