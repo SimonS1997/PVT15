@@ -247,10 +247,14 @@ class _HomeScreenState extends State<HomeScreen> {
               break;
 
             case 2:
-              Navigator.pushReplacementNamed(context, '/plan');
+              Navigator.pushReplacementNamed(context, '/nearby');
               break;
 
             case 3:
+              Navigator.pushReplacementNamed(context, '/plan');
+              break;
+
+            case 4:
               Navigator.pushReplacementNamed(context, '/profile');
               break;
           }

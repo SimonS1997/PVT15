@@ -31,6 +31,11 @@ class BottomNavBar extends StatelessWidget {
           label: 'Karta',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.near_me_outlined),
+          activeIcon: Icon(Icons.near_me),
+          label: 'Nära mig',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.favorite_border),
           activeIcon: Icon(Icons.favorite),
           label: 'Min plan',

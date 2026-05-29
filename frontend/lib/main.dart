@@ -12,6 +12,7 @@ import 'screens/profile_page.dart';
 import 'screens/home_screen.dart';
 import 'screens/myplan_screen.dart';
 import 'screens/event_information_screen.dart';
+import 'screens/nearby_screen.dart';
 
 void main() {
   runApp(const KulturnattenApp());
@@ -55,6 +56,7 @@ class KulturnattenApp extends StatelessWidget {
         routePlan: (_) => const MyPlanScreen(),
         routeFeasibility: (_) => const FeasibilityScreen(),
         routeEventInformation: (_) => const EventInformationScreen(),
+        '/nearby': (_) => const NearbyScreen(),
       },
     );
 
