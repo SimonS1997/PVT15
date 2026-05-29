@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _error;
   String _selectedLabel = "Alla";
   String _searchTerm = "";
+  bool _sortByStartTime = false;
 
   @override
   void initState() {
@@ -81,6 +82,37 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onSearchChanged(String value) {
     setState(() => _searchTerm = value);
     _loadEvents();
+  }
+
+  List<EventLocation> get _visibleEvents {
+    final events = [..._events];
+    if (!_sortByStartTime) return events;
+
+    events.sort((a, b) {
+      final aMinutes = _startMinutes(a.timeStart);
+      final bMinutes = _startMinutes(b.timeStart);
+      if (aMinutes == null && bMinutes == null) {
+        return a.name.compareTo(b.name);
+      }
+      if (aMinutes == null) return 1;
+      if (bMinutes == null) return -1;
+      final timeCompare = aMinutes.compareTo(bMinutes);
+      if (timeCompare != 0) return timeCompare;
+      return a.name.compareTo(b.name);
+    });
+
+    return events;
+  }
+
+  int? _startMinutes(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final match = RegExp(r'(\d{1,2})[:.](\d{2})').firstMatch(value);
+    if (match == null) return null;
+
+    final hour = int.tryParse(match.group(1)!);
+    final minute = int.tryParse(match.group(2)!);
+    if (hour == null || minute == null) return null;
+    return hour * 60 + minute;
   }
 
   @override
@@ -282,7 +314,9 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    if (_events.isEmpty) {
+    final events = _visibleEvents;
+
+    if (events.isEmpty) {
       return const Center(
         child: Text(
           "Inga event matchade.",
@@ -297,19 +331,104 @@ class _HomeScreenState extends State<HomeScreen> {
         return ListView(
           physics: const BouncingScrollPhysics(),
           children: [
-            const Text(
-              "Event",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    "Event",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                _SortButton(
+                  sortByStartTime: _sortByStartTime,
+                  onChanged: (value) {
+                    setState(() => _sortByStartTime = value);
+                  },
+                ),
+              ],
             ),
+            if (_sortByStartTime) ...[
+              const SizedBox(height: 6),
+              const Text(
+                "Sorterad efter starttid",
+                style: TextStyle(
+                  color: Color(0xFFAE8ACF),
+                  fontSize: 13,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
-            for (var event in _events) _EventCard(event: event),
+            for (var event in events) _EventCard(event: event),
           ],
         );
       },
+    );
+  }
+}
+
+class _SortButton extends StatelessWidget {
+  const _SortButton({
+    required this.sortByStartTime,
+    required this.onChanged,
+  });
+
+  final bool sortByStartTime;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<bool>(
+      tooltip: "Sortera",
+      color: const Color(0xFF1D0930),
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        CheckedPopupMenuItem(
+          value: false,
+          checked: !sortByStartTime,
+          child: const Text(
+            "Standard",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+        CheckedPopupMenuItem(
+          value: true,
+          checked: sortByStartTime,
+          child: const Text(
+            "Starttid",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1D0930),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF861C91)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.sort,
+              color: Color(0xFFAE8ACF),
+              size: 18,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              sortByStartTime ? "Starttid" : "Sortera",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
