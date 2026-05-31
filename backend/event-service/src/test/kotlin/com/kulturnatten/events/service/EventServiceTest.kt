@@ -77,6 +77,13 @@ class EventServiceTest {
     }
 
     @Test
+    fun `getAllEvents excludes events without coordinates`() {
+        val events = service.getAllEvents(category = null, search = null)
+
+        assertTrue(events.none { it.name == "Event utan koordinater" })
+    }
+
+    @Test
     fun `getAllEvents filters by category`() {
         val events = service.getAllEvents(category = "MUSIC", search = null)
 
@@ -103,6 +110,13 @@ class EventServiceTest {
         val events = service.getAllEvents(category = null, search = "OPERAN")
 
         assertEquals(listOf("Operavisning"), events.map { it.name })
+    }
+
+    @Test
+    fun `getAllEvents combines category and search filters`() {
+        val events = service.getAllEvents(category = "MUSIC", search = "konsert")
+
+        assertEquals(listOf("Konsert"), events.map { it.name })
     }
 
     @Test

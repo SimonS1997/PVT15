@@ -6,8 +6,8 @@ import com.kulturnatten.transit.model.TransitJourneyResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.Mockito.`when`
 import kotlin.test.assertEquals
@@ -42,7 +42,15 @@ class TransitServiceTest {
     }
 
     @Test
-    fun `planLegs returns empty response when fewer than two stops are provided`() {
+    fun `planLegs returns empty response when no stops are provided`() {
+        val result = service.planLegs(emptyList())
+
+        assertTrue(result.legs.isEmpty())
+        verifyNoInteractions(slApiClient)
+    }
+
+    @Test
+    fun `planLegs returns empty response when one stop is provided`() {
         val result = service.planLegs(
             listOf(
                 stop(name = "ABF Stockholm"),
@@ -50,15 +58,7 @@ class TransitServiceTest {
         )
 
         assertTrue(result.legs.isEmpty())
-        verify(slApiClient, never()).planTripByCoord(
-            originLat = 59.0,
-            originLon = 18.0,
-            originName = "ABF Stockholm",
-            destLat = 59.0,
-            destLon = 18.0,
-            destName = "Konserthuset",
-            departTime = "18:00",
-        )
+        verifyNoInteractions(slApiClient)
     }
 
     @Test

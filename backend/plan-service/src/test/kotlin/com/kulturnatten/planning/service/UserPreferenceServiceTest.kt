@@ -13,7 +13,6 @@ import tools.jackson.databind.ObjectMapper
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class UserPreferenceServiceTest {
@@ -92,7 +91,7 @@ class UserPreferenceServiceTest {
         service.upsert("user-1", "saved_events", "[1,2]")
 
         assertEquals("[1,2]", existing.value)
-        assertTrue(existing.updatedAt >= originalUpdatedAt)
+        assertTrue(existing.updatedAt > originalUpdatedAt)
         verify(repository).save(existing)
     }
 
