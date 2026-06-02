@@ -1,112 +1,65 @@
 # Mikrotjänstarkitektur
 
-Kulturnatten-appen är uppdelad i fyra fristående tjänster bakom en gemensam Keycloak-baserad auth. Varje tjänst byggs och deployas separat via `docker-compose.yml` i repo-roten och har sitt eget ansvarsområde.
+Nattkartan är uppdelad i fyra fristående backend-tjänster bakom en gemensam Keycloak-baserad inloggning. Varje tjänst byggs och körs separat via docker-compose.yml i repo-roten. Frontend (frontend/) pratar med tjänsterna via REST och skickar med JWT från Keycloak i Authorization-headern.
 
-## Översikt
-
-| Tjänst | Port | Ansvar | Datakälla |
-|---|---|---|---|
-| kulturnatten-auth (Keycloak) | 8081 | Identitet, inloggning, JWT-utfärdande | Keycloak realm-export |
-| event-service | 8082 | Tillhandahålla evenemangsdata | SQLite (`events.db`) |
-| transit-service | 8083 | Resvägsplanering via SL | SL API (extern) |
-| plan-service | 8084 | Användarens preferenser och planerade besök | SQLite (`plans.db`) |
-
-Frontend (`frontend/`) konsumerar dessa REST-API:er och skickar med JWT från Keycloak i `Authorization`-headern.
+Tjänsterna lyssnar internt på portarna 8081 till 8084. Keycloak, event-service och plan-service mappas också ut externt. Transit-service är i nuläget bara nåbar inifrån dockernätet eftersom den inte har någon ports-mappning i compose, så om frontend ska nå den utifrån behöver det fixas.
 
 ## kulturnatten-auth (Keycloak)
 
-**Ansvar**
-- Hanterar användarregistrering, inloggning och utloggning.
-- Utfärdar och signerar JWT-tokens som de övriga tjänsterna validerar.
-- Realm `kulturnatten-dev` importeras automatiskt från `realm-export.json`.
+Hanterar registrering, inloggning, utloggning och utfärdar de JWT-tokens som övriga tjänster validerar. Realmet kulturnatten-dev importeras automatiskt från realm-export.json vid uppstart.
 
-**Gränser**
-- Innehåller ingen domänlogik (inga events, planer eller resor).
-- Övriga tjänster pratar inte med Keycloak under request-flödet — de validerar bara token-signaturen mot issuern.
-
-**Issuer-URL:** `http://keycloak:8080/realms/kulturnatten-dev` (internt) / `http://localhost:8081/...` (extern).
+Tjänsten innehåller ingen domänlogik, inga events, planer eller resor lever här. Issuern är http://localhost:8081/realms/kulturnatten-dev utåt och http://keycloak:8080/... internt i dockernätet.
 
 ## event-service
 
-**Ansvar**
-- Exponerar evenemangskatalogen (namn, plats, tid, beskrivning, koordinater m.m.).
-- Läser från en read-only SQLite-databas (`/data/events.db`) som seedas externt.
-- Filtrerar bort events utan koordinater så frontend kan rita kartan utan extra logik.
+Exponerar evenemangskatalogen för Kulturnatten, alltså namn, plats, tid, beskrivning och koordinater. Datan ligger i en read-only SQLite-fil (/data/events.db) som seedas externt. Tjänsten filtrerar bort events utan koordinater så frontend kan rita ut kartan utan extra logik.
 
-**Endpoints**
-- `GET /api/events` → lista alla geokodade events.
+Det går att lista events via GET /api/events. Den tar tre valfria query-parametrar: category och search för filtrering, samt ids för att hämta en specifik mängd events på en gång (används bland annat när "Min plan" ska visa sparade events). Enskilda events hämtas via GET /api/events/{id}, som returnerar 404 om det inte finns.
 
-**Gränser**
-- Skriver inte data — katalogen är statisk per kulturnatt.
-- Vet inget om användare, planer eller resvägar.
+Tjänsten skriver aldrig data, eftersom katalogen är statisk per kulturnatt. Den vet heller inget om användare, planer eller resvägar.
 
 ## transit-service
 
-**Ansvar**
-- Slår upp resor mellan två punkter via SL:s publika API (`SlApiClient`).
-- Översätter SL:s svar till appens egna `TransitJourneyResponse`-modeller.
+Slår upp resor mellan punkter via ResRobot (Trafiklab) och kräver en RESROBOT_API_KEY som env-var. Klassen heter SlApiClient av historiska skäl men det är ResRobot-API:t som faktiskt anropas. Svaren översätts till appens egna TransitJourneyResponse-modeller.
 
-**Endpoints**
-- `POST /api/transit/journey` med `{ origin, destination }` → planerad resa.
+Två endpoints finns:
 
-**Gränser**
-- Statslös — ingen egen databas.
-- Känner inte till specifika events; den får bara koordinater/adresser från frontend.
+- POST /api/transit/journey med { origin, destination } för en enkel resa mellan två punkter.
+- POST /api/transit/legs med en lista stopp, som returnerar resorna mellan varje par. Det är den här "Hinner jag?" använder för att räkna ut hela rundan.
+
+Tjänsten är statslös och har ingen egen databas. Den känner inte till specifika events utan får bara koordinater eller adresser från frontend.
 
 ## plan-service
 
-**Ansvar**
-- Lagrar användarens personliga preferenser (favoritkategorier, sparade event-ID:n, m.m.).
-- Egen SQLite-databas (`/data/plans.db`) skild från event-katalogen.
+Lagrar användarens personliga preferenser, t.ex. favoritkategorier och sparade event-ID:n. Den hanterar också kontoskapande och kontoradering genom att prata med Keycloaks admin-API. Egen SQLite-databas (/data/plans.db) skild från event-katalogen.
 
-**Endpoints** — alla kräver giltig JWT, alla operationer scope:as till `jwt.subject`:
-- `GET /api/preferences` → alla preferenser för inloggad användare som `{ key: value }` (data-export).
-- `GET /api/preferences/{key}` → en preferens, eller 404.
-- `PUT /api/preferences/{key}` med JSON-body → upsert (skapar eller uppdaterar).
-- `DELETE /api/preferences/{key}` → 204 om raderad, 404 om okänd.
-- `DELETE /api/preferences` → raderar alla preferenser för användaren, returnerar `{ deleted: n }`.
+Alla preferens-endpoints kräver giltig JWT och scope:as till jwt.subject, alltså den inloggade användaren:
 
-**Datamodell**
+- GET /api/preferences hämtar alla preferenser.
+- GET /api/preferences/{key} hämtar en specifik, eller 404 om den saknas.
+- PUT /api/preferences/{key} gör upsert (skapar eller uppdaterar).
+- DELETE /api/preferences/{key} raderar en, returnerar 204 eller 404.
+- DELETE /api/preferences raderar alla och returnerar antal raderade.
 
-Tabell `user_preferences` (SQLite):
+Utöver det finns två konto-endpoints:
 
-| Kolumn | Typ | Beskrivning |
-|---|---|---|
-| `id` | INTEGER PK AUTOINCREMENT | surrogatnyckel |
-| `user_id` | TEXT NOT NULL | Keycloak `sub` från JWT |
-| `pref_key` | TEXT NOT NULL | preferens-nyckel (t.ex. `favorite_categories`) |
-| `pref_value` | TEXT NOT NULL | preferens-värde som JSON-sträng (godtycklig struktur) |
-| `updated_at` | INTEGER NOT NULL | epoch millis |
+- POST /api/account/register skapar en ny användare i Keycloak via admin-API:t. Tar e-post och lösenord, returnerar 409 om mejlen redan finns.
+- DELETE /api/account raderar både preferenserna och Keycloak-användaren för den inloggade.
 
-- `UNIQUE(user_id, pref_key)` — en rad per (användare, nyckel), upsert via PUT.
-- Index på `user_id` för listning.
+För admin-API:t använder plan-service ett separat service-account-konto i Keycloak, konfigurerat via KEYCLOAK_BASE_URL, KEYCLOAK_REALM, KEYCLOAK_ADMIN_CLIENT_ID och KEYCLOAK_ADMIN_CLIENT_SECRET.
 
-Schema initieras från `src/main/resources/schema.sql` vid uppstart (`spring.sql.init.mode=always`).
+Datan ligger i tabellen user_preferences med en surrogatnyckel id, ett user_id (Keycloaks sub från JWT), en pref_key, ett pref_value (JSON-sträng) och updated_at i epoch millis. Det finns en UNIQUE(user_id, pref_key) så att PUT kan göra upsert, plus ett index på user_id för listning. Schemat initieras från src/main/resources/schema.sql vid uppstart via spring.sql.init.mode=always.
 
-**Designval — varför key/value istället för typade kolumner**
-- Frontend kan introducera nya preferenser (t.ex. `theme`, `language`, `notifications`) utan migration.
-- `pref_value` lagras som JSON-textsträng, så listor och objekt fungerar utan extra tabeller.
-- Kompromiss: ingen schemagaranti på värdets form — frontend äger validering per key.
+Valet att lagra preferenser som key/value istället för typade kolumner gjordes för att frontend ska kunna introducera nya preferenser (t.ex. theme, language, notifications) utan att vi behöver köra en migration varje gång. pref_value är en JSON-textsträng, så listor och objekt funkar direkt utan extra tabeller. Kompromissen är att backend inte garanterar formen på värdet, det ansvaret ligger på frontend per key.
 
-**Privacy/security**
-- `user_id` plockas alltid från JWT-subject; ingen endpoint accepterar `user_id` som parameter.
-- En användare kan därmed bara läsa, skriva och radera sina egna preferenser.
-- Token-validering sker mot Keycloak-issuern i `SecurityConfig`.
+På säkerhetssidan plockas user_id alltid från JWT-subject. Ingen preferens-endpoint accepterar user_id som parameter, så en användare kan bara läsa, skriva och radera sina egna preferenser. Token-validering sker mot Keycloak-issuern i SecurityConfig. Tjänsten refererar event-ID:n men duplicerar inte event-data, frontend joinar mot event-service själv. Resvägslogiken hör hemma i transit-service.
 
-**Gränser**
-- Refererar event-ID:n men duplicerar inte event-data; frontend joinar via event-service.
-- Ingen resvägslogik — den ligger i transit-service.
+## Hur tjänsterna pratar med varandra
 
-## Kommunikationsmönster
+Frontend pratar med varje tjänst direkt via REST och JWT, och det är frontend som orkestrerar flödet (hämtar events, frågar transit, sparar i plan). Tjänsterna anropar inte varandra.
 
-- **Frontend → tjänst:** REST/JSON med JWT i `Authorization: Bearer ...`.
-- **Tjänst → Keycloak:** endast vid uppstart för att hämta JWK-set (token-validering).
-- **Tjänst → tjänst:** ingen direkt kommunikation idag. Frontend orkestrerar (hämtar events, frågar transit, sparar plan).
-- **Externa beroenden:** transit-service → SL API.
+Mot Keycloak finns det två sorters trafik: alla tjänster hämtar JWK-set vid uppstart för att kunna validera tokens, och plan-service anropar dessutom Keycloaks admin-API runtime vid registrering och kontoradering. Den enda externa integrationen i övrigt är transit-service mot ResRobot.
 
-## Varför uppdelningen
+## Varför uppdelningen ser ut så här
 
-- **Auth isolerad** så att vi kan byta IdP utan att röra domänkoden.
-- **Event-katalogen separat** eftersom den är read-only och har en helt annan livscykel (seedas inför varje kulturnatt).
-- **Transit fristående** eftersom den bara wrappar ett externt API och kan skalas/cacheas oberoende.
-- **Plan separat** eftersom det är den enda skrivande, användarspecifika tjänsten — håller persistensen för användardata åtskild från katalogdata.
+Auth är utbruten så att vi kan byta IdP utan att röra domänkoden. Event-katalogen ligger för sig eftersom den är read-only och har en helt annan livscykel, den seedas inför varje kulturnatt och uppdateras sällan däremellan. Transit är fristående eftersom den bara wrappar ett externt API och kan skalas eller cacheas oberoende. Plan ligger för sig eftersom det är den enda skrivande, användarspecifika tjänsten, och då vill vi hålla persistensen för användardata åtskild från katalogdatan.
