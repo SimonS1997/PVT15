@@ -8,7 +8,7 @@ Projektet består av en Flutter-app och fyra backend-tjänster: Keycloak för in
 
 Du behöver Docker (vi har testat med Docker Desktop), Flutter SDK 3.10 eller senare, samt en Android-emulator för att köra appen. Vill du bygga backenden lokalt utan Docker behövs JDK 21.
 
-Transit-tjänsten använder SL/ResRobot, så du behöver en gratis API-nyckel från trafiklab.se.
+Transit-tjänsten använder ResRobot via Trafiklab, så du behöver en gratis API-nyckel från trafiklab.se. För kartan i appen behöver du också en Google Maps API-nyckel med "Maps SDK for Android" aktiverat.
 
 ## Konfiguration
 
@@ -21,13 +21,16 @@ KEYCLOAK_ADMIN_CLIENT_SECRET=
 
 RESROBOT_API_KEY hämtar du från trafiklab. KEYCLOAK_ADMIN_CLIENT_SECRET får du från Keycloak-admin första gången du startar projektet, gå in på klienten plan-service-admin under Credentials och kopiera secret:en, lägg in i .env och starta om Compose.
 
-För frontenden kopierar du mallen:
+För frontenden kopierar du två mallar:
 
 
 cp frontend/env/auth.example.json frontend/env/auth.local.json
+cp frontend/android/key.example.properties frontend/android/key.properties
 
 
-Default-värdena i exemplet fungerar mot den lokala Keycloak-instansen. Variablerna som läses är AUTH_CLIENT_ID, AUTH_REDIRECT_URI, AUTH_ISSUER_URL och AUTH_SCOPES.
+I auth.local.json fungerar default-värdena mot den lokala Keycloak-instansen. Variablerna som läses är AUTH_CLIENT_ID, AUTH_REDIRECT_URI, AUTH_ISSUER_URL och AUTH_SCOPES.
+
+I key.properties fyller du i din Google Maps-nyckel som värdet på GOOGLE_MAPS_API_KEY. Utan den startar Android-builden men kartan visas inte i appen.
 
 ## Köra projektet
 
